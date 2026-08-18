@@ -44,6 +44,21 @@ These are the complete installation steps on every supported operating system.
 
 ## First run
 
+After the global installation, enter the project Spencer should work on and launch it with no additional command arguments:
+
+```bash
+cd /path/to/your/project
+spencer
+```
+
+Spencer prompts:
+
+```text
+What would you like Spencer to work on?
+```
+
+Enter a task such as `Fix the failing parser test and run the relevant checks`. Spencer uses the current directory as the workspace. You can also provide the task directly, for example `spencer "Fix the failing parser test"`.
+
 Run diagnostics without contacting the managed backend:
 
 ```bash
@@ -85,7 +100,14 @@ This architecture keeps credentials out of developer machines, shell history, re
 
 ## Daily usage
 
-Run Spencer from the repository it should modify:
+The normal daily workflow is to change into the repository and start Spencer:
+
+```bash
+cd /path/to/repository
+spencer
+```
+
+Spencer asks what you would like it to work on, then shows proposed file writes and shell commands for approval. A task can also be supplied directly when scripting or when you already know the exact request:
 
 ```bash
 spencer "Fix the failing parser test"

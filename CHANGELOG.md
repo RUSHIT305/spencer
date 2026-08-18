@@ -2,6 +2,13 @@
 
 All notable changes to Spencer are documented here.
 
+## [0.5.1] — 2026-08-18
+
+### Added
+
+- Running `spencer` without a task in an interactive terminal now prompts for the coding task and uses the current directory as the workspace.
+- Updated the primary npm installation and daily-use documentation to make the `cd project && spencer` workflow explicit.
+
 ## [0.5.0] — 2026-08-18
 
 ### Changed

@@ -9,6 +9,43 @@ const wrapper = path.resolve(__dirname, '..', 'bin', 'spencer.js');
 const cli = require('../lib/cli.js');
 
 
+test('prompts for a task when launched interactively without positionals', async () => {
+  let closed = false;
+  const task = await cli.readTask([], {
+    input: { isTTY: true },
+    output: {},
+    createInterface: ({ input, output }) => {
+      assert.equal(input.isTTY, true);
+      assert.deepEqual(output, {});
+      return {
+        question: async (prompt) => {
+          assert.equal(prompt, 'What would you like Spencer to work on? ');
+          return 'Fix the failing parser test';
+        },
+        close: () => { closed = true; },
+      };
+    },
+  });
+  assert.equal(task, 'Fix the failing parser test');
+  assert.equal(closed, true);
+});
+
+
+test('does not prompt for a missing task in non-interactive mode', async () => {
+  let prompted = false;
+  const task = await cli.readTask([], {
+    input: { isTTY: false },
+    output: {},
+    createInterface: () => {
+      prompted = true;
+      throw new Error('should not prompt');
+    },
+  });
+  assert.equal(task, '');
+  assert.equal(prompted, false);
+});
+
+
 test('parses only workspace and safety options', () => {
   const parsed = cli.parseArgs(['--max-steps', '8', '--timeout', '45', 'Fix', 'tests']);
   assert.deepEqual(parsed.positionals, ['Fix', 'tests']);
@@ -20,7 +57,7 @@ test('parses only workspace and safety options', () => {
 
 test('runs the npm-installed executable directly', () => {
   const output = execFileSync(process.execPath, [wrapper, '--version'], { encoding: 'utf8' });
-  assert.match(output, /spencer 0\.5\.0/);
+  assert.match(output, /spencer 0\.5\.1/);
 });
 
 

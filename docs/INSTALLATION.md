@@ -39,13 +39,22 @@ A healthy result shows the Spencer version, Node version, platform, workspace, m
 
 ## Run Spencer
 
-Start with a read-only task:
+The normal workflow is to enter the project directory and type `spencer`:
 
 ```bash
-spencer "Inspect this repository and explain its architecture without modifying files"
+cd /path/to/your/project
+spencer
 ```
 
-Then run a focused coding task:
+Spencer prompts for the task:
+
+```text
+What would you like Spencer to work on?
+```
+
+Enter a request such as `Inspect this repository and explain its architecture without modifying files` or `Fix the failing test and run the relevant checks`. The current directory is used as the workspace.
+
+For scripts and one-line requests, provide the task directly:
 
 ```bash
 spencer "Fix the failing test and run the relevant checks"
