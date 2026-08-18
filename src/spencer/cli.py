@@ -28,8 +28,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("task", nargs="*", help="The coding task Spencer should complete.")
     parser.add_argument("--cwd", default=".", help="Workspace directory; defaults to the current directory.")
     parser.add_argument("--config", type=Path, help="Use a specific TOML configuration file.")
-    parser.add_argument("--model", help="Model ID; defaults to config, SPENCER_MODEL, or gpt-5-mini.")
-    parser.add_argument("--api-base", help="OpenAI-compatible API base URL.")
+    parser.add_argument("--protocol", choices=["openai-compatible", "generic-json", "anthropic-messages", "ollama-chat"], help="Provider protocol.")
+    parser.add_argument("--model", help="Provider model ID; defaults to config or SPENCER_MODEL.")
+    parser.add_argument("--api-url", help="Provider HTTP endpoint for chat/tool requests.")
+    parser.add_argument("--api-key-header", help="Header receiving the API key (default: Authorization).")
+    parser.add_argument("--api-key-prefix", help="Prefix before the API key (default: Bearer; use empty for raw keys).")
+    parser.add_argument("--headers", help="Extra request headers as a JSON object.")
+    parser.add_argument("--request-fields", help="Extra JSON request fields as an object.")
+    parser.add_argument("--api-timeout", type=int, help="Provider request timeout in seconds.")
     parser.add_argument("--max-steps", type=int, help="Maximum model/tool turns (default: 20).")
     parser.add_argument("--timeout", type=int, help="Shell command timeout in seconds (default: 30).")
     parser.add_argument(
@@ -96,9 +102,12 @@ def _doctor(settings: Settings) -> int:
         "platform": platform.platform(),
         "workspace": str(settings.workspace),
         "config_file": str(settings.config_file) if settings.config_file else "none",
+        "protocol": settings.protocol,
         "model": settings.model,
-        "api_base": settings.api_base or "provider default",
+        "api_url": settings.api_url or "missing",
         "api_key": "configured" if settings.api_key else "missing",
+        "api_key_header": settings.api_key_header,
+        "configured_header_names": sorted(settings.headers),
         "state_directory": str(settings.state_directory),
     }
     print(json.dumps(checks, indent=2))
@@ -114,8 +123,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         settings = Settings.from_values(
             Path(args.cwd),
+            protocol=args.protocol,
             model=args.model,
-            api_base=args.api_base,
+            api_url=args.api_url,
+            api_key_header=args.api_key_header,
+            api_key_prefix=args.api_key_prefix,
+            headers=json.loads(args.headers) if args.headers else None,
+            request_fields=json.loads(args.request_fields) if args.request_fields else None,
+            api_timeout=args.api_timeout,
             max_steps=args.max_steps,
             command_timeout=args.timeout,
             auto_approve=True if args.yes else None,

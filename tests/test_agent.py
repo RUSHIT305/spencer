@@ -7,11 +7,11 @@ from spencer.tools import ToolRegistry
 from spencer.workspace import Workspace
 
 
-class FakeCompletions:
+class FakeProvider:
     def __init__(self) -> None:
         self.calls = 0
 
-    def create(self, **_kwargs):
+    def complete(self, **_kwargs):
         self.calls += 1
         if self.calls == 1:
             call = SimpleNamespace(
@@ -27,19 +27,14 @@ class FakeCompletions:
         return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
 
-class FakeClient:
-    def __init__(self) -> None:
-        self.chat = SimpleNamespace(completions=FakeCompletions())
-
-
 def test_agent_executes_approved_tool_and_returns_final_text(tmp_path: Path) -> None:
     settings = Settings.from_values(tmp_path, max_steps=3)
     workspace = Workspace(tmp_path)
-    client = FakeClient()
+    provider = FakeProvider()
     agent = Agent(
         settings,
         ToolRegistry(workspace),
-        client=client,
+        provider=provider,
         approve=lambda _name, _arguments: True,
     )
 
@@ -47,4 +42,4 @@ def test_agent_executes_approved_tool_and_returns_final_text(tmp_path: Path) -> 
 
     assert result == "Implemented and verified."
     assert (tmp_path / "hello.txt").read_text() == "hello\n"
-    assert client.chat.completions.calls == 2
+    assert provider.calls == 2

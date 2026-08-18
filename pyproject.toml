@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spencer-agent"
-version = "0.1.0"
-description = "A safe, terminal-first coding agent for local repositories"
+version = "0.2.0"
+description = "A safe, provider-neutral terminal coding agent for local repositories"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Spencer contributors" }]
@@ -23,7 +23,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "openai>=1.50.0",
     "tomli>=2.0.0; python_version < '3.11'",
 ]
 

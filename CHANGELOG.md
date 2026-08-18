@@ -2,6 +2,14 @@
 
 All notable changes to Spencer are documented here.
 
+## [0.2.0] — 2026-08-18
+
+### Added
+
+- Provider-neutral HTTP API support through `generic-json`, `openai-compatible`, `anthropic-messages`, and `ollama-chat` protocols.
+- Configurable API URL, model, API-key header, API-key prefix, custom headers, request timeout, and response JSON paths.
+- Standard-library HTTP transport with no required vendor SDK dependency.
+
 ## [0.1.0] — 2026-08-18
 
 ### Added

@@ -14,7 +14,7 @@ Spencer is a terminal-first coding agent for developers who want an AI pair prog
 
 The default experience is deliberately human-in-the-loop: Spencer can inspect automatically, but file changes and shell commands require approval. The final result remains in your normal Git working tree for review.
 
-> **Current release note:** Spencer is release-ready at `0.1.0`, but this repository is currently private and the package has not yet been published to PyPI. The guaranteed installation path today is the source installation below. Once the first package release is published, the `uv` and `pipx` commands in the distribution section become the shortest install path.
+> **Current release note:** Spencer is release-ready at `0.2.0`, but this repository is currently private and the package has not yet been published to PyPI. The guaranteed installation path today is the source installation below. Once the first package release is published, the `uv` and `pipx` commands in the distribution section become the shortest install path.
 
 ## What Spencer does
 
@@ -24,7 +24,7 @@ The default experience is deliberately human-in-the-loop: Spencer can inspect au
 | Code changes | Replaces UTF-8 text files atomically inside the selected workspace. |
 | Verification | Runs focused tests, linters, formatters, and other developer commands with bounded time and output. |
 | Developer control | Prompts before writes and shell commands; `--yes` is an explicit trusted-automation switch. |
-| Provider flexibility | Uses an OpenAI-compatible API with configurable model and endpoint. |
+| Provider flexibility | Connects to configurable HTTP APIs through generic JSON, OpenAI-compatible, Anthropic Messages, or Ollama Chat protocols. |
 | Automation | Supports quiet output, JSON results, deterministic step limits, and diagnostics. |
 
 ## Installation: the guaranteed path today
@@ -92,39 +92,45 @@ spencer --version
 spencer --doctor
 ```
 
-You should see `spencer 0.1.0`. The diagnostic output reports the Python runtime, workspace, model, endpoint, and whether an API key is configured. It does not call the model.
+You should see `spencer 0.2.0`. The diagnostic output reports the Python runtime, workspace, protocol, model, endpoint, and whether an API key is configured. It does not call the model.
 
-### Step 5 — Configure your API key
+### Step 5 — Connect any API provider
 
-Set the key in the same terminal session where you will run Spencer.
+Spencer is provider-neutral. It sends JSON over HTTP and supports four protocol adapters: `generic-json`, `openai-compatible`, `anthropic-messages`, and `ollama-chat`. Choose the adapter that matches your API instead of changing Spencer’s core agent.
 
 macOS or Linux:
 
 ```bash
 export SPENCER_API_KEY="your-key"
+export SPENCER_API_URL="https://your-provider.example/v1/chat/completions"
+export SPENCER_API_PROTOCOL="generic-json"
+export SPENCER_MODEL="your-model-id"
 ```
 
 Windows PowerShell:
 
 ```powershell
 $env:SPENCER_API_KEY = "your-key"
-```
-
-`OPENAI_API_KEY` is also supported. For an OpenAI-compatible gateway, configure the endpoint and model as needed:
-
-```bash
-export SPENCER_API_BASE="https://your-provider.example/v1"
-export SPENCER_MODEL="your-model-id"
-```
-
-PowerShell:
-
-```powershell
-$env:SPENCER_API_BASE = "https://your-provider.example/v1"
+$env:SPENCER_API_URL = "https://your-provider.example/v1/chat/completions"
+$env:SPENCER_API_PROTOCOL = "generic-json"
 $env:SPENCER_MODEL = "your-model-id"
 ```
 
-Run the diagnostic again. A configured installation should report `api_key: configured`.
+If the API uses a custom authentication header or a raw key, configure it explicitly:
+
+```bash
+export SPENCER_API_KEY_HEADER="X-API-Key"
+export SPENCER_API_KEY_PREFIX=""
+```
+
+For additional request headers:
+
+```bash
+export SPENCER_API_HEADERS='{"X-Project":"spencer","X-Region":"global"}'
+export SPENCER_REQUEST_FIELDS='{"provider_option":"value"}'
+```
+
+Run the diagnostic again. A configured installation should report `api_key: configured`, the selected protocol, and the provider URL.
 
 ### Step 6 — Run your first task
 
@@ -219,14 +225,34 @@ A repository-local configuration can be committed when the team agrees on the de
 
 ```toml
 [agent]
-model = "gpt-5-mini"
+protocol = "generic-json"
+model = "your-model-id"
+api_url = "https://your-provider.example/v1/chat/completions"
+api_key_header = "Authorization"
+api_key_prefix = "Bearer"
+headers = { "X-Project" = "spencer" }
+request_fields = { "provider_option" = "value" }
+api_timeout = 120
+content_path = "choices.0.message.content"
+tool_calls_path = "choices.0.message.tool_calls"
 max_steps = 20
 command_timeout = 30
 auto_approve = false
 max_output_chars = 12000
 ```
 
-The available environment variables are `SPENCER_API_KEY`, `OPENAI_API_KEY`, `SPENCER_API_BASE`, `SPENCER_MODEL`, `SPENCER_MAX_STEPS`, `SPENCER_COMMAND_TIMEOUT`, `SPENCER_AUTO_APPROVE`, and `SPENCER_MAX_OUTPUT_CHARS`.
+The available environment variables are `SPENCER_API_KEY`, `SPENCER_API_URL`, `SPENCER_API_PROTOCOL`, `SPENCER_API_KEY_HEADER`, `SPENCER_API_KEY_PREFIX`, `SPENCER_API_HEADERS`, `SPENCER_REQUEST_FIELDS`, `SPENCER_API_TIMEOUT`, `SPENCER_CONTENT_PATH`, `SPENCER_TOOL_CALLS_PATH`, `SPENCER_MODEL`, `SPENCER_MAX_STEPS`, `SPENCER_COMMAND_TIMEOUT`, `SPENCER_AUTO_APPROVE`, and `SPENCER_MAX_OUTPUT_CHARS`.
+
+### Supported API protocols
+
+| Protocol | Use it for | Response mapping |
+|---|---|---|
+| `generic-json` | A custom HTTP API that returns JSON. | Configure `content_path` and `tool_calls_path` for the response shape. |
+| `openai-compatible` | An API that follows the common chat-completions tool format. | Uses `choices.0.message.content` and `choices.0.message.tool_calls`. |
+| `anthropic-messages` | An API that follows the Messages and tool-use format. | Spencer converts text blocks and tool-use blocks into its internal format. |
+| `ollama-chat` | An Ollama Chat API endpoint. | Uses `message.content` and `message.tool_calls`. |
+
+For a custom response shape, the dotted paths make the adapter configurable without writing a new integration. See the complete provider cookbook in [`docs/PROVIDERS.md`](docs/PROVIDERS.md) and the installation matrix in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
 ## Safety model
 
@@ -241,7 +267,7 @@ These are defense-in-depth controls, not a replacement for a container, VM, or o
 ```text
 spencer/
 ├── assets/                 Brand assets
-├── docs/                   Installation and architecture guides
+├── docs/                   Installation, provider, and architecture guides
 ├── scripts/                Unix and PowerShell installers
 ├── src/spencer/
 │   ├── agent.py            Model/tool orchestration loop

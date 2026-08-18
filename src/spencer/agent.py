@@ -5,7 +5,7 @@ from collections.abc import Callable
 from typing import Any
 
 from .config import Settings
-from .provider import ChatProvider
+from .provider import HTTPProvider, ProviderResponse
 from .tools import TOOL_SCHEMAS, ToolRegistry
 from .workspace import WorkspaceError
 
@@ -42,14 +42,13 @@ class Agent:
         settings: Settings,
         registry: ToolRegistry,
         *,
-        provider: ChatProvider | None = None,
-        client: Any | None = None,
+        provider: HTTPProvider | Any | None = None,
         approve: ApprovalCallback | None = None,
         on_event: EventCallback | None = None,
     ):
         self.settings = settings
         self.registry = registry
-        self.provider = provider or ChatProvider(settings, client=client)
+        self.provider = provider or HTTPProvider(settings)
         self.approve = approve or (lambda _name, _args: False)
         self.on_event = on_event or (lambda _kind, _payload: None)
 
@@ -120,5 +119,5 @@ class Agent:
             "Review the repository state and run Spencer again with a narrower task if needed."
         )
 
-    def _complete(self, messages: list[dict[str, Any]]) -> Any:
+    def _complete(self, messages: list[dict[str, Any]]) -> ProviderResponse:
         return self.provider.complete(model=self.settings.model, messages=messages, tools=TOOL_SCHEMAS)

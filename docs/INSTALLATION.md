@@ -92,27 +92,65 @@ py -m pip install -e '.[dev]'
 spencer --version
 ```
 
-## Configure a provider
+## Configure any API provider
 
-Spencer needs an API key for an OpenAI-compatible provider. Set one of these variables in the same terminal session where Spencer will run:
+Spencer is provider-neutral. It sends standard JSON over HTTP and normalizes one of four protocols: `generic-json`, `openai-compatible`, `anthropic-messages`, or `ollama-chat`. The default configuration template uses `generic-json`; choose the adapter that matches your provider.
+
+Create a user configuration template:
+
+```bash
+spencer --init
+```
+
+Then set the credentials in the same terminal session where Spencer will run:
 
 ```bash
 export SPENCER_API_KEY="your-key"
-# OPENAI_API_KEY is also supported
+export SPENCER_API_URL="https://your-provider.example/v1/chat/completions"
+export SPENCER_MODEL="your-model-id"
+export SPENCER_API_PROTOCOL="generic-json"
 ```
 
 PowerShell:
 
 ```powershell
 $env:SPENCER_API_KEY = "your-key"
+$env:SPENCER_API_URL = "https://your-provider.example/v1/chat/completions"
+$env:SPENCER_MODEL = "your-model-id"
+$env:SPENCER_API_PROTOCOL = "generic-json"
 ```
 
-If you use a compatible gateway, configure its endpoint as well:
+For providers that require a different authentication header or raw key format:
 
 ```bash
-export SPENCER_API_BASE="https://your-provider.example/v1"
-export SPENCER_MODEL="your-model-id"
+export SPENCER_API_KEY_HEADER="X-API-Key"
+export SPENCER_API_KEY_PREFIX=""
 ```
+
+For additional headers, pass a JSON object:
+
+```bash
+export SPENCER_API_HEADERS='{"X-Custom-Header":"value","X-Project":"spencer"}'
+export SPENCER_REQUEST_FIELDS='{"provider_option":"value"}'
+```
+
+The same values can be stored in `.spencer.toml`:
+
+```toml
+[agent]
+protocol = "generic-json"
+model = "your-model-id"
+api_url = "https://your-provider.example/v1/chat/completions"
+api_key_header = "Authorization"
+api_key_prefix = "Bearer"
+api_timeout = 120
+content_path = "choices.0.message.content"
+tool_calls_path = "choices.0.message.tool_calls"
+headers = { "X-Custom-Header" = "value" }
+request_fields = { "provider_option" = "value" }
+```
+
+The `content_path` and `tool_calls_path` fields let a custom JSON API map its response into Spencer’s normalized agent response. See the provider section in the main README for the supported payload shapes.
 
 ## Verify the installation
 
@@ -122,7 +160,7 @@ Run the diagnostic command from the repository you want Spencer to inspect:
 spencer --doctor
 ```
 
-A healthy result shows the Spencer version, Python version, workspace, selected model, provider endpoint, and `api_key: configured`. The diagnostic command does not call the model.
+A healthy result shows the Spencer version, Python version, workspace, selected protocol, model, provider URL, and `api_key: configured`. The diagnostic command does not call the model.
 
 ## First task
 
