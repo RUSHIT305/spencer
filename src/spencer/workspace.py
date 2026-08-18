@@ -47,7 +47,7 @@ class Workspace:
         if not base.exists():
             raise WorkspaceError(f"Path does not exist: {path}")
         if base.is_file():
-            return str(base.relative_to(self.root))
+            return base.relative_to(self.root).as_posix()
 
         ignored = {".git", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache"}
         results: list[str] = []
@@ -61,7 +61,7 @@ class Workspace:
                 dirs[:] = []
                 continue
             for filename in files:
-                results.append(str((current_path / filename).relative_to(self.root)))
+                results.append((current_path / filename).relative_to(self.root).as_posix())
                 if len(results) >= 200:
                     results.append("... (truncated at 200 files)")
                     return "\n".join(results)
@@ -85,7 +85,7 @@ class Workspace:
                     continue
                 for line_number, line in enumerate(text.splitlines(), 1):
                     if query.lower() in line.lower():
-                        matches.append(f"{file_path.relative_to(self.root)}:{line_number}: {line[:240]}")
+                        matches.append(f"{file_path.relative_to(self.root).as_posix()}:{line_number}: {line[:240]}")
                         if len(matches) >= 100:
                             return "\n".join(matches) + "\n... (truncated at 100 matches)"
         return "\n".join(matches) or "(no matches)"
@@ -129,7 +129,7 @@ class Workspace:
         finally:
             if temporary_path and temporary_path.exists():
                 temporary_path.unlink(missing_ok=True)
-        return f"Wrote {len(content.splitlines())} lines to {file_path.relative_to(self.root)}."
+        return f"Wrote {len(content.splitlines())} lines to {file_path.relative_to(self.root).as_posix()}."
 
     def git_status(self) -> str:
         completed = subprocess.run(
