@@ -1,0 +1,9 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Spencer mark</title>
+  <desc id="desc">A cobalt square containing a terminal prompt and a white S.</desc>
+  <rect width="256" height="256" rx="56" fill="#111827"/>
+  <path d="M62 82L98 112L62 142" stroke="#60A5FA" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M119 143H183" stroke="#F9FAFB" stroke-width="18" stroke-linecap="round"/>
+  <path d="M164 76C151 72 135 73 126 81C115 91 123 104 143 111C164 118 176 127 170 139C164 153 141 157 120 151" stroke="#F9FAFB" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="196" cy="184" r="10" fill="#34D399"/>
+</svg>
