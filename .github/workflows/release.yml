@@ -93,6 +93,9 @@ jobs:
     timeout-minutes: 15
     needs: build
     steps:
+      - name: Verify managed gateway health
+        run: curl --fail --silent --show-error --retry 5 --retry-delay 3 https://api.spencer.dev/health
+
       - name: Download standalone executables
         uses: actions/download-artifact@v4
         with:
