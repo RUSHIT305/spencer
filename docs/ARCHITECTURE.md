@@ -1,20 +1,62 @@
-# Spencer Architecture
+# Spencer architecture
 
-Spencer is intentionally split into small boundaries so the product can evolve without turning the terminal experience into a monolith.
+Spencer is a Node.js command-line application distributed exclusively through npm. The runtime is intentionally local: it reads a selected repository, sends normalized requests to a configured HTTP API, executes approved workspace tools, and returns a final response.
 
-| Boundary | Responsibility |
-|---|---|
-| `cli.py` | Parses commands, renders progress, handles approval prompts, and exposes diagnostics. |
-| `config.py` | Resolves settings from CLI flags, environment variables, workspace TOML, and user TOML. |
-| `provider.py` | Sends provider-neutral HTTP requests, normalizes supported protocols, and retries transient failures. |
-| `agent.py` | Runs the model/tool conversation and enforces the step budget. |
-| `tools.py` | Publishes the explicit model-facing tool contract and dispatches approved operations. |
-| `workspace.py` | Owns path containment, text I/O, atomic writes, Git status, and bounded shell execution. |
+## Runtime layers
 
-The runtime flow is straightforward. The CLI resolves a workspace and settings, builds a constrained workspace object, and starts the agent. The agent sends a task plus an initial repository snapshot to the provider. When the model requests a tool, Spencer validates the arguments, asks for approval when the tool can mutate state, executes it inside the workspace, and returns the bounded result to the model. The loop stops at a final model response or the configured step limit.
+```text
+npm executable
+    │
+    ▼
+CLI and configuration
+    │
+    ├── diagnostics and initialization
+    ├── approval policy
+    └── output formatting
+    │
+    ▼
+Agent loop
+    │
+    ├── normalized conversation messages
+    ├── bounded iteration count
+    └── tool-call dispatch
+    │
+    ├───────────────┬────────────────────┐
+    ▼               ▼                    ▼
+Provider registry  Workspace tools       Safety controls
+    │               │                    │
+    ├── generic     ├── list/search/read ├── root containment
+    ├── compatible  ├── atomic write     ├── symlink checks
+    ├── Messages    ├── Git status       ├── command blocklist
+    └── Ollama      └── bounded commands └── time/output limits
+```
 
-> Spencer’s safety model is defense-in-depth, not a substitute for a container, VM, or operating-system sandbox when the repository or command is untrusted.
+## Provider contract
 
-## Product boundaries
+The provider layer has two responsibilities. A backend builds a JSON request body from normalized Spencer messages and tools. The same backend normalizes the provider response into a stable `{ choices: [{ message: { content, tool_calls } }] }` shape consumed by the agent. Retries, request timeouts, authentication headers, and HTTP transport stay in Spencer core.
 
-Spencer does not run a background daemon, collect hidden telemetry, or require a hosted workspace. It operates on the developer’s machine and leaves changes in the developer’s normal Git working tree. The provider contract supports generic JSON, OpenAI-compatible, Anthropic Messages, and Ollama Chat protocols; future adapters can be added without changing the agent or CLI contracts.
+Built-in backends cover generic JSON, OpenAI-compatible, Anthropic Messages, and Ollama Chat APIs. Custom Node backend plugins can register additional request/response contracts without changing the agent or workspace layers.
+
+## Workspace boundary
+
+The workspace object resolves the selected root once and rejects absolute paths, traversal, and symlink escapes. File writes use a temporary file followed by an atomic rename. Reads and command output are bounded. Shell execution inherits the workspace as its current directory and exposes `SPENCER_WORKSPACE` for scripts that need to locate it.
+
+The command policy blocks a small set of obviously destructive patterns. This is defense in depth, not a sandbox. For untrusted repositories, run Spencer inside a container or disposable machine with least privilege.
+
+## Configuration precedence
+
+Runtime settings resolve in this order:
+
+1. Explicit CLI flags.
+2. Environment variables.
+3. Repository-local `.spencer.toml`.
+4. User configuration created by `spencer --init`.
+5. Safe defaults.
+
+Secrets are read only at runtime and diagnostics report only whether a key is configured. No credentials are written to the repository by Spencer.
+
+## Distribution
+
+The package is self-contained as an npm artifact. It includes the Node CLI, runtime library, and documentation needed by users and maintainers. It does not require Python, a Python package manager, a provider SDK, or a provider-specific installer.
+
+CI validates the npm package across macOS, Linux, and Windows with Node 18, 20, and 22. Tagged releases publish the package with npm provenance enabled.

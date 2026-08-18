@@ -1,10 +1,69 @@
 # Provider configuration
 
-Spencer separates the agent from the model transport. Choose a protocol adapter, point `api_url` at the provider endpoint, set the model ID, and configure authentication headers when required.
+Spencer is provider-neutral and npm-only. It uses Node’s built-in `fetch` implementation to send JSON over HTTP. No provider SDK, Python package, local runtime, or provider-specific installation is required.
+
+Choose a protocol adapter, set the endpoint and model, then provide credentials through environment variables or `.spencer.toml`.
 
 ## Generic JSON API
 
-Use this for a custom service that accepts a JSON body and returns a JSON object. The default response mapping expects a chat-completions-style response, but dotted paths can map another shape.
+Use this for a custom HTTP service. Response paths can map a provider-specific JSON envelope into Spencer’s normalized response.
+
+```bash
+export SPENCER_API_PROTOCOL="generic-json"
+export SPENCER_API_URL="https://api.example.com/v1/generate"
+export SPENCER_API_KEY="your-key"
+export SPENCER_MODEL="coding-model"
+export SPENCER_API_KEY_HEADER="X-API-Key"
+export SPENCER_API_KEY_PREFIX=""
+export SPENCER_CONTENT_PATH="result.text"
+export SPENCER_TOOL_CALLS_PATH="result.actions"
+```
+
+## OpenAI-compatible API
+
+Use this for an API gateway that follows the common chat-completions request and tool-call response shape. Spencer supports this protocol for compatibility; it does not require an OpenAI account or SDK.
+
+```bash
+export SPENCER_API_PROTOCOL="openai-compatible"
+export SPENCER_API_URL="https://gateway.example.com/v1/chat/completions"
+export SPENCER_API_KEY="your-key"
+export SPENCER_MODEL="coding-model"
+```
+
+## Anthropic Messages
+
+Use the built-in Messages adapter for content blocks and tool-use blocks. Configure any required version or organization headers through `SPENCER_API_HEADERS`.
+
+```bash
+export SPENCER_API_PROTOCOL="anthropic-messages"
+export SPENCER_API_URL="https://api.example.com/v1/messages"
+export SPENCER_API_KEY="your-key"
+export SPENCER_API_KEY_HEADER="x-api-key"
+export SPENCER_API_KEY_PREFIX=""
+export SPENCER_API_HEADERS='{"anthropic-version":"2023-06-01"}'
+export SPENCER_MODEL="coding-model"
+```
+
+## Ollama Chat
+
+Use the built-in Ollama adapter for a local model server. Installing Ollama itself is optional and separate from installing Spencer; Spencer only needs the HTTP endpoint at runtime.
+
+```bash
+export SPENCER_API_PROTOCOL="ollama-chat"
+export SPENCER_API_URL="http://localhost:11434/api/chat"
+export SPENCER_MODEL="qwen2.5-coder"
+```
+
+## Custom request fields
+
+Add provider-specific JSON request fields without changing Spencer:
+
+```bash
+export SPENCER_REQUEST_FIELDS='{"provider_option":"value"}'
+export SPENCER_API_HEADERS='{"X-Project":"spencer"}'
+```
+
+The same settings can be stored in `.spencer.toml`:
 
 ```toml
 [agent]
@@ -13,57 +72,12 @@ api_url = "https://api.example.com/v1/generate"
 model = "coding-model"
 api_key_header = "X-API-Key"
 api_key_prefix = ""
+headers = { "X-Project" = "spencer" }
 request_fields = { "provider_option" = "value" }
 content_path = "result.text"
 tool_calls_path = "result.actions"
 ```
 
-## OpenAI-compatible API
+## Backend plugins
 
-Use this for gateways and hosted services that implement the common chat-completions request and tool-call response structure.
-
-```toml
-[agent]
-protocol = "openai-compatible"
-api_url = "https://gateway.example.com/v1/chat/completions"
-model = "coding-model"
-api_key_header = "Authorization"
-api_key_prefix = "Bearer"
-content_path = "choices.0.message.content"
-tool_calls_path = "choices.0.message.tool_calls"
-```
-
-Spencer supports this protocol for compatibility, but it does not require an OpenAI account or SDK.
-
-## Anthropic Messages
-
-Use the Messages adapter for a provider that accepts Anthropic-style content blocks and tool use. Configure the provider’s required headers through `headers`.
-
-```toml
-[agent]
-protocol = "anthropic-messages"
-api_url = "https://api.example.com/v1/messages"
-model = "coding-model"
-api_key_header = "x-api-key"
-api_key_prefix = ""
-headers = { "anthropic-version" = "2023-06-01" }
-```
-
-## Ollama Chat
-
-Use the Ollama adapter for a local Ollama server. The API key can be omitted.
-
-```toml
-[agent]
-protocol = "ollama-chat"
-api_url = "http://localhost:11434/api/chat"
-model = "qwen2.5-coder"
-api_key_header = "Authorization"
-api_key_prefix = ""
-```
-
-## Custom response shapes
-
-For a generic JSON API, `content_path` and `tool_calls_path` are dotted paths. Array indexes are supported. For example, `data.answer.text` reads a nested string, while `data.actions.0` reads the first array element. Tool-call objects should contain a name and arguments, either directly or under a `function` object. Arguments may be a JSON string or an object. Use `request_fields` or `SPENCER_REQUEST_FIELDS` to add provider-specific JSON fields to the request body.
-
-If a provider uses a different request body—not just a different response envelope—add a protocol adapter in `src/spencer/provider.py` and cover it with a transport-level test. The agent, workspace tools, approvals, and CLI do not need to change.
+Install Spencer only with npm. If your organization needs a different request or response contract, ship a Node backend plugin through the `spencer.backends` package export. The plugin is a runtime extension, not an installation prerequisite for Spencer.

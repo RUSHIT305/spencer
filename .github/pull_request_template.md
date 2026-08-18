@@ -8,8 +8,9 @@ Explain the important implementation or documentation changes. Call out compatib
 
 ## Verification
 
-- [ ] `python -m pytest`
-- [ ] CLI smoke test (`spencer --version`)
+- [ ] `npm test`
+- [ ] `npm run check`
+- [ ] CLI smoke test (`node bin/spencer.js --version`)
 - [ ] Documentation updated when behavior or installation changed
 - [ ] No secrets, generated artifacts, or proprietary repository content included
 

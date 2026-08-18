@@ -1,211 +1,88 @@
 # Install Spencer
 
-Spencer is a Python engine distributed through both Python tooling and a cross-platform npm launcher. Python 3.10 or newer is required by the runtime. Choose one installation path below, then verify the command before starting your first run.
+Spencer is a Node.js command-line application. **npm is the only installation method.** No Python runtime, Python package manager, virtual environment, provider SDK, or provider-specific installer is required.
 
-## Option A: npm — recommended for Node.js developers
+## Requirements
 
-The npm package installs a cross-platform `spencer` launcher. The launcher runs Spencer’s bundled Python engine, so Python 3.10 or newer must be installed on the machine.
-
-### Global install
+Install Node.js 18 or newer. Then install Spencer with npm:
 
 ```bash
 npm install --global spencer-agent
 spencer --version
 ```
 
-### One-off execution with npx
+For a one-time run without a global install:
 
 ```bash
 npx spencer-agent --version
-npx spencer-agent "Explain this repository without modifying files"
+npx spencer-agent "Explain this repository without changing files"
 ```
 
-### Project-local install
+For a project-local developer dependency:
 
 ```bash
 npm install --save-dev spencer-agent
 npx spencer "Run the relevant tests and summarize the result"
 ```
 
-If Python is installed but not on `PATH`, point Spencer at it explicitly:
+The same commands work in macOS, Linux, Windows PowerShell, Windows Command Prompt, CI runners, and containerized Node environments.
 
-```bash
-SPENCER_PYTHON=/absolute/path/to/python spencer --version
-```
+## Configure an API at runtime
 
-Windows PowerShell:
-
-```powershell
-$env:SPENCER_PYTHON = "C:\\Python312\\python.exe"
-spencer --version
-```
-
-The npm wrapper supports macOS, Linux, and Windows. It discovers `SPENCER_PYTHON`, an active virtual environment, `python3`/`python`, or the Windows `py` launcher in that order.
-
-## Option B: `uv` — recommended for Python-only environments
-
-`uv` installs Spencer into an isolated tool environment and keeps the `spencer` executable available without modifying a project virtual environment.
-
-### macOS and Linux
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-# Restart your terminal, then:
-uv tool install spencer-agent
-spencer --version
-```
-
-### Windows PowerShell
-
-```powershell
-winget install --id=astral-sh.uv -e
-# Restart PowerShell, then:
-uv tool install spencer-agent
-spencer --version
-```
-
-## Option C: `pipx`
-
-`pipx` is also an isolated installation method.
-
-### macOS and Linux
-
-```bash
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-# Restart your terminal, then:
-pipx install spencer-agent
-spencer --version
-```
-
-### Windows PowerShell
-
-```powershell
-py -m pip install --user pipx
-py -m pipx ensurepath
-# Restart PowerShell, then:
-pipx install spencer-agent
-spencer --version
-```
-
-## Option D: user-level Python installation
-
-Use this option when `uv` and `pipx` are not available.
-
-### macOS and Linux
-
-```bash
-python3 -m pip install --user --upgrade spencer-agent
-spencer --version
-```
-
-### Windows PowerShell
-
-```powershell
-py -m pip install --user --upgrade spencer-agent
-spencer --version
-```
-
-If the command is not found after a user-level installation, add Python’s user `bin` or `Scripts` directory to `PATH`, then restart the terminal.
-
-## Option E: install from a source checkout
-
-This path is intended for contributors or developers testing unreleased changes.
-
-```bash
-git clone https://github.com/RUSHIT305/spencer.git
-cd spencer
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -e '.[dev]'
-spencer --version
-```
-
-On Windows PowerShell:
-
-```powershell
-git clone https://github.com/RUSHIT305/spencer.git
-Set-Location spencer
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-py -m pip install -e '.[dev]'
-spencer --version
-```
-
-## Configure any API provider
-
-Spencer is provider-neutral. It sends standard JSON over HTTP and normalizes one of four protocols: `generic-json`, `openai-compatible`, `anthropic-messages`, or `ollama-chat`. The default configuration template uses `generic-json`; choose the adapter that matches your provider.
-
-Create a user configuration template:
+Spencer does not install a provider or provider SDK. It sends standard HTTP JSON requests to the API endpoint you choose. Configure the endpoint, model, and credentials as environment variables or in Spencer’s generated configuration file.
 
 ```bash
 spencer --init
 ```
 
-Then set the credentials in the same terminal session where Spencer will run:
+Set the runtime values for your provider:
 
 ```bash
-export SPENCER_API_KEY="your-key"
-export SPENCER_API_URL="https://your-provider.example/v1/chat/completions"
-export SPENCER_MODEL="your-model-id"
 export SPENCER_API_PROTOCOL="generic-json"
+export SPENCER_API_URL="https://your-provider.example/v1/chat/completions"
+export SPENCER_API_KEY="your-key"
+export SPENCER_MODEL="your-model-id"
 ```
 
-PowerShell:
+Windows PowerShell:
 
 ```powershell
-$env:SPENCER_API_KEY = "your-key"
-$env:SPENCER_API_URL = "https://your-provider.example/v1/chat/completions"
-$env:SPENCER_MODEL = "your-model-id"
 $env:SPENCER_API_PROTOCOL = "generic-json"
+$env:SPENCER_API_URL = "https://your-provider.example/v1/chat/completions"
+$env:SPENCER_API_KEY = "your-key"
+$env:SPENCER_MODEL = "your-model-id"
 ```
 
-For providers that require a different authentication header or raw key format:
-
-```bash
-export SPENCER_API_KEY_HEADER="X-API-Key"
-export SPENCER_API_KEY_PREFIX=""
-```
-
-For additional headers, pass a JSON object:
-
-```bash
-export SPENCER_API_HEADERS='{"X-Custom-Header":"value","X-Project":"spencer"}'
-export SPENCER_REQUEST_FIELDS='{"provider_option":"value"}'
-```
-
-The same values can be stored in `.spencer.toml`:
-
-```toml
-[agent]
-protocol = "generic-json"
-model = "your-model-id"
-api_url = "https://your-provider.example/v1/chat/completions"
-api_key_header = "Authorization"
-api_key_prefix = "Bearer"
-api_timeout = 120
-content_path = "choices.0.message.content"
-tool_calls_path = "choices.0.message.tool_calls"
-headers = { "X-Custom-Header" = "value" }
-request_fields = { "provider_option" = "value" }
-```
-
-The `content_path` and `tool_calls_path` fields let a custom JSON API map its response into Spencer’s normalized agent response. See the provider section in the main README for the supported payload shapes.
+These are **runtime settings**, not installation steps. Spencer supports generic JSON, OpenAI-compatible, Anthropic Messages, and Ollama Chat protocols without installing any provider package.
 
 ## Verify the installation
 
-Run the diagnostic command from the repository you want Spencer to inspect:
+Run diagnostics without contacting a model:
 
 ```bash
 spencer --doctor
 ```
 
-A healthy result shows the Spencer version, Python version, workspace, selected protocol, model, provider URL, and `api_key: configured`. The diagnostic command does not call the model.
+A healthy result shows the Spencer version, Node version, platform, workspace, selected protocol, model, endpoint status, and available built-in backends. API keys are reported only as `configured` or `missing`; their values are never printed.
 
-## First task
+## Run Spencer
+
+Start with a read-only task:
 
 ```bash
-spencer "Explain this repository, identify the relevant test command, and do not modify files"
+spencer "Inspect the repository and explain its architecture without changing files"
 ```
 
-When Spencer proposes a write or shell command, review the prompt before approving it. After an approved coding task, inspect the resulting diff with Git.
+Then run a task that may propose changes:
+
+```bash
+spencer "Fix the failing test and run the relevant checks"
+```
+
+Spencer asks for approval before file writes and shell commands. Use `--yes` only in a trusted workspace or controlled CI job.
+
+## Troubleshooting
+
+If `spencer` is not found after a global installation, open a new terminal so npm’s global binary directory is available on `PATH`. Check the npm global prefix with `npm prefix --global`.
+
+If an API request fails, run `spencer --doctor`, confirm the endpoint and model values, and inspect the selected protocol. Do not install a provider SDK; Spencer’s HTTP backend is built in.

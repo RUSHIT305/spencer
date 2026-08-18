@@ -5,16 +5,86 @@
   <p>Inspect. Edit. Verify. Stay in control.</p>
   <p>
     <a href="https://github.com/RUSHIT305/spencer/actions/workflows/ci.yml"><img src="https://github.com/RUSHIT305/spencer/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+    <a href="https://img.shields.io/badge/install-npm_only-111827.svg"><img src="https://img.shields.io/badge/install-npm_only-111827.svg" alt="npm-only installation" /></a>
     <a href="https://github.com/RUSHIT305/spencer/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-111827.svg" alt="MIT license" /></a>
-    <a href="https://github.com/RUSHIT305/spencer/releases"><img src="https://img.shields.io/badge/status-beta-2563eb.svg" alt="Beta status" /></a>
+    <a href="https://img.shields.io/badge/status-beta-2563eb.svg"><img src="https://img.shields.io/badge/status-beta-2563eb.svg" alt="Beta status" /></a>
   </p>
 </div>
 
-Spencer is a terminal-first coding agent for developers who want an AI pair programmer without leaving their shell, editor, Git workflow, or local machine. The core engine is Python, with first-class Python and cross-platform npm distribution paths. Give Spencer a task in plain English. It inspects the repository, proposes focused changes, runs relevant checks, and explains the result.
+Spencer is a **Node.js terminal coding agent** for developers who want an AI pair programmer without leaving the shell, editor, or Git workflow. It is distributed strictly through npm, runs on Node.js 18 or newer, and works on macOS, Linux, Windows, CI runners, and containers.
 
-The default experience is deliberately human-in-the-loop: Spencer can inspect automatically, but file changes and shell commands require approval. The final result remains in your normal Git working tree for review.
+> **Installation policy:** Spencer is installed with npm only. No Python runtime, Python package manager, virtual environment, provider SDK, or provider-specific installer is required.
 
-> **Current release note:** Spencer is release-ready at `0.4.0`, but the package has not yet been published to npm or PyPI. The guaranteed installation path today is the source installation below. Once the first registry releases are published, the `npm`, `uv`, and `pipx` commands in the distribution section become the shortest install paths.
+The default experience is human-in-the-loop. Spencer can inspect automatically, but file changes and shell commands require approval. The final result remains in the normal Git working tree for review.
+
+## Install Spencer
+
+### Global installation
+
+```bash
+npm install --global spencer-agent
+spencer --version
+```
+
+### One-time execution with npx
+
+```bash
+npx spencer-agent --version
+npx spencer-agent "Explain this repository without changing files"
+```
+
+### Project-local installation
+
+```bash
+npm install --save-dev spencer-agent
+npx spencer "Run the relevant tests and summarize the result"
+```
+
+These commands are the complete installation process for every supported operating system.
+
+## First run
+
+Run diagnostics without contacting a model:
+
+```bash
+spencer --doctor
+```
+
+Start with a read-only repository task:
+
+```bash
+spencer "Inspect this repository and explain its architecture without modifying files"
+```
+
+Then try a focused coding task:
+
+```bash
+spencer "Fix the failing parser test and run the relevant checks"
+```
+
+Spencer displays proposed file writes and shell commands. Approve each action interactively, or use `--yes` only in a trusted workspace or controlled automation job.
+
+## Configure any API at runtime
+
+Spencer does not install or bundle a provider SDK. It sends standard HTTP JSON requests to the endpoint you choose. Configure the API at runtime:
+
+```bash
+export SPENCER_API_PROTOCOL="generic-json"
+export SPENCER_API_URL="https://your-provider.example/v1/chat/completions"
+export SPENCER_API_KEY="your-key"
+export SPENCER_MODEL="your-model-id"
+```
+
+Windows PowerShell:
+
+```powershell
+$env:SPENCER_API_PROTOCOL = "generic-json"
+$env:SPENCER_API_URL = "https://your-provider.example/v1/chat/completions"
+$env:SPENCER_API_KEY = "your-key"
+$env:SPENCER_MODEL = "your-model-id"
+```
+
+This is runtime configuration, not installation. Spencer includes built-in adapters for generic JSON, OpenAI-compatible, Anthropic Messages, and Ollama Chat protocols. See [`docs/PROVIDERS.md`](docs/PROVIDERS.md) for examples.
 
 ## What Spencer does
 
@@ -24,193 +94,8 @@ The default experience is deliberately human-in-the-loop: Spencer can inspect au
 | Code changes | Replaces UTF-8 text files atomically inside the selected workspace. |
 | Verification | Runs focused tests, linters, formatters, and other developer commands with bounded time and output. |
 | Developer control | Prompts before writes and shell commands; `--yes` is an explicit trusted-automation switch. |
-| Provider flexibility | Connects to configurable HTTP APIs through generic JSON, OpenAI-compatible, Anthropic Messages, or Ollama Chat protocols. |
+| Provider flexibility | Connects to configurable HTTP APIs through built-in protocol adapters. |
 | Automation | Supports quiet output, JSON results, deterministic step limits, and diagnostics. |
-
-## Installation: the guaranteed path today
-
-The following steps work from the connected GitHub repository on **macOS, Linux, and Windows**. You need Git and Python 3.10 or newer.
-
-### Step 1 — Clone the repository
-
-If the repository is private, make sure your GitHub account has access and that Git authentication is configured.
-
-```bash
-git clone https://github.com/RUSHIT305/spencer.git
-cd spencer
-```
-
-On Windows PowerShell, the same commands work:
-
-```powershell
-git clone https://github.com/RUSHIT305/spencer.git
-Set-Location spencer
-```
-
-### Step 2 — Create an isolated Python environment
-
-On macOS or Linux:
-
-```bash
-python3 -m venv .venv
-. .venv/bin/activate
-```
-
-On Windows PowerShell:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks activation scripts, run this once for your user account and then activate again:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-```
-
-### Step 3 — Install Spencer
-
-Install the checked-out package in editable mode. This gives you the `spencer` command and lets you receive repository updates with Git.
-
-```bash
-python -m pip install --upgrade pip
-python -m pip install -e '.[dev]'
-```
-
-On Windows PowerShell, use:
-
-```powershell
-py -m pip install --upgrade pip
-py -m pip install -e '.[dev]'
-```
-
-### Step 4 — Verify the installation
-
-```bash
-spencer --version
-spencer --doctor
-```
-
-You should see `spencer 0.4.0`. The diagnostic output reports the Python runtime, workspace, protocol, model, endpoint, and whether an API key is configured. It does not call the model.
-
-### Step 5 — Connect any API provider
-
-Spencer is provider-neutral. It sends JSON over HTTP and supports four protocol adapters: `generic-json`, `openai-compatible`, `anthropic-messages`, and `ollama-chat`. Choose the adapter that matches your API instead of changing Spencer’s core agent.
-
-macOS or Linux:
-
-```bash
-export SPENCER_API_KEY="your-key"
-export SPENCER_API_URL="https://your-provider.example/v1/chat/completions"
-export SPENCER_API_PROTOCOL="generic-json"
-export SPENCER_MODEL="your-model-id"
-```
-
-Windows PowerShell:
-
-```powershell
-$env:SPENCER_API_KEY = "your-key"
-$env:SPENCER_API_URL = "https://your-provider.example/v1/chat/completions"
-$env:SPENCER_API_PROTOCOL = "generic-json"
-$env:SPENCER_MODEL = "your-model-id"
-```
-
-If the API uses a custom authentication header or a raw key, configure it explicitly:
-
-```bash
-export SPENCER_API_KEY_HEADER="X-API-Key"
-export SPENCER_API_KEY_PREFIX=""
-```
-
-For additional request headers:
-
-```bash
-export SPENCER_API_HEADERS='{"X-Project":"spencer","X-Region":"global"}'
-export SPENCER_REQUEST_FIELDS='{"provider_option":"value"}'
-```
-
-Run the diagnostic again. A configured installation should report `api_key: configured`, the selected protocol, and the provider URL.
-
-### Step 6 — Run your first task
-
-Start with a read-only task to understand the workflow:
-
-```bash
-spencer "Explain this repository, identify the relevant test command, and do not modify files"
-```
-
-Then try a focused change:
-
-```bash
-spencer "Add a small validation improvement, run the relevant tests, and summarize the diff"
-```
-
-Spencer will show proposed file writes and shell commands. Review each action and answer `y` only when you want it to proceed. When the run finishes, inspect the result with:
-
-```bash
-git status
-git diff
-```
-
-## Distribution installation
-
-### npm — cross-platform Node.js launcher
-
-The npm package is the recommended install path for JavaScript and TypeScript developers. It installs a cross-platform `spencer` executable and keeps the Python engine bundled inside the package. Python 3.10 or newer must be available on `PATH`, or you can set `SPENCER_PYTHON` to an explicit interpreter path.
-
-After the npm package is published:
-
-```bash
-npm install --global spencer-agent
-spencer --version
-```
-
-Run without a global install:
-
-```bash
-npx spencer-agent --version
-npx spencer-agent "Fix the failing parser test"
-```
-
-Install into a project:
-
-```bash
-npm install --save-dev spencer-agent
-npx spencer "Run the relevant tests and summarize the result"
-```
-
-From this repository, test the exact npm package path:
-
-```bash
-npm install
-npm test
-node bin/spencer.js --version
-```
-
-### Python distribution
-
-After the first public npm or Python package release, the shortest Python installation paths will be:
-
-```bash
-uv tool install spencer-agent
-# or
-pipx install spencer-agent
-```
-
-User-level Python is the fallback:
-
-```bash
-python3 -m pip install --user --upgrade spencer-agent
-```
-
-Windows PowerShell:
-
-```powershell
-py -m pip install --user --upgrade spencer-agent
-```
-
-The repository includes ready-to-use installers at [`scripts/install.sh`](scripts/install.sh) and [`scripts/install.ps1`](scripts/install.ps1). The complete matrix is documented in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
 ## Daily usage
 
@@ -241,7 +126,7 @@ spencer --yes --quiet --json "Run the unit tests and report the result"
 | Command | Purpose |
 |---|---|
 | `spencer --help` | Show all available options. |
-| `spencer --doctor` | Check installation and provider configuration without calling the model. |
+| `spencer --doctor` | Check the Node installation and provider configuration without calling the model. |
 | `spencer --init` | Create a user configuration template. |
 | `spencer --version` | Print the installed version. |
 | `spencer --json` | Emit a machine-readable final result. |
@@ -250,13 +135,7 @@ spencer --yes --quiet --json "Run the unit tests and report the result"
 
 ## Configuration
 
-Spencer resolves settings in this order: command-line flags, environment variables, a repository-local `.spencer.toml`, and a user configuration file. Create the user template with:
-
-```bash
-spencer --init
-```
-
-A repository-local configuration can be committed when the team agrees on the defaults:
+Spencer resolves settings in this order: command-line flags, environment variables, a repository-local `.spencer.toml`, and a user configuration file created by `spencer --init`.
 
 ```toml
 [agent]
@@ -267,33 +146,33 @@ api_key_header = "Authorization"
 api_key_prefix = "Bearer"
 headers = { "X-Project" = "spencer" }
 request_fields = { "provider_option" = "value" }
-api_timeout = 120
+api_timeout_ms = 120000
 content_path = "choices.0.message.content"
 tool_calls_path = "choices.0.message.tool_calls"
 max_steps = 20
-command_timeout = 30
+command_timeout_ms = 30000
 auto_approve = false
 max_output_chars = 12000
 ```
 
-The available environment variables are `SPENCER_API_KEY`, `SPENCER_API_URL`, `SPENCER_API_PROTOCOL`, `SPENCER_API_KEY_HEADER`, `SPENCER_API_KEY_PREFIX`, `SPENCER_API_HEADERS`, `SPENCER_REQUEST_FIELDS`, `SPENCER_API_TIMEOUT`, `SPENCER_CONTENT_PATH`, `SPENCER_TOOL_CALLS_PATH`, `SPENCER_MODEL`, `SPENCER_MAX_STEPS`, `SPENCER_COMMAND_TIMEOUT`, `SPENCER_AUTO_APPROVE`, and `SPENCER_MAX_OUTPUT_CHARS`.
+Available environment variables include `SPENCER_API_KEY`, `SPENCER_API_URL`, `SPENCER_API_PROTOCOL`, `SPENCER_API_KEY_HEADER`, `SPENCER_API_KEY_PREFIX`, `SPENCER_API_HEADERS`, `SPENCER_REQUEST_FIELDS`, `SPENCER_API_TIMEOUT_MS`, `SPENCER_CONTENT_PATH`, `SPENCER_TOOL_CALLS_PATH`, `SPENCER_MODEL`, `SPENCER_MAX_STEPS`, `SPENCER_COMMAND_TIMEOUT_MS`, `SPENCER_AUTO_APPROVE`, and `SPENCER_MAX_OUTPUT_CHARS`.
 
-### Supported API protocols
+## Built-in protocols
 
 | Protocol | Use it for | Response mapping |
 |---|---|---|
-| `generic-json` | A custom HTTP API that returns JSON. | Configure `content_path` and `tool_calls_path` for the response shape. |
-| `openai-compatible` | An API that follows the common chat-completions tool format. | Uses `choices.0.message.content` and `choices.0.message.tool_calls`. |
-| `anthropic-messages` | An API that follows the Messages and tool-use format. | Spencer converts text blocks and tool-use blocks into its internal format. |
-| `ollama-chat` | An Ollama Chat API endpoint. | Uses `message.content` and `message.tool_calls`. |
+| `generic-json` | A custom HTTP API that returns JSON. | Configure `content_path` and `tool_calls_path`. |
+| `openai-compatible` | An API following the common chat-completions tool format. | Uses `choices.0.message.content` and `choices.0.message.tool_calls`. |
+| `anthropic-messages` | An API following the Messages and tool-use format. | Converts text blocks and tool-use blocks into Spencer’s normalized format. |
+| `ollama-chat` | An Ollama Chat HTTP endpoint. | Uses `message.content` and `message.tool_calls`. |
 
-For a custom response shape, the dotted paths make the adapter configurable without writing a new integration. Installed backend plugins can add a new protocol through the `spencer.backends` entry-point group. See the complete provider cookbook in [`docs/PROVIDERS.md`](docs/PROVIDERS.md), the plugin contract in [`docs/PLUGINS.md`](docs/PLUGINS.md), and the installation matrix in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+For a different request or response contract, add a Node backend plugin. See [`docs/PLUGINS.md`](docs/PLUGINS.md).
 
 ## Safety model
 
 Spencer treats the selected workspace as a hard boundary. Absolute paths, traversal attempts, and symlink escapes are rejected. Text reads and writes have configurable size limits. Writes are atomic and preserve existing file permissions.
 
-Shell commands run from the workspace root with a timeout, bounded output, and a `SPENCER_WORKSPACE` environment variable. Several obviously destructive patterns are blocked, including `sudo`, recursive deletion from filesystem root, hard Git resets, forced Git clean operations, fork-bomb syntax, and system power commands.
+Shell commands run from the workspace root with a timeout, bounded output, and a `SPENCER_WORKSPACE` environment variable. Obviously destructive patterns are blocked, including `sudo`, recursive deletion from filesystem root, hard Git resets, forced Git clean operations, fork-bomb syntax, and system power commands.
 
 These are defense-in-depth controls, not a replacement for a container, VM, or operating-system sandbox when working with untrusted code. Run Spencer with the least privilege necessary and review the resulting Git diff.
 
@@ -302,42 +181,39 @@ These are defense-in-depth controls, not a replacement for a container, VM, or o
 ```text
 spencer/
 ├── assets/                 Brand assets
-├── docs/                   Installation, provider, plugin, and architecture guides
-├── scripts/                Unix and PowerShell installers
-├── src/spencer/
-│   ├── agent.py            Model/tool orchestration loop
-│   ├── cli.py              Terminal interface and diagnostics
-│   ├── config.py           Layered cross-platform configuration
-│   ├── provider.py         Provider retries and API compatibility
-│   ├── tools.py            Model-facing tool definitions
-│   └── workspace.py        Repository operations and safety checks
-├── tests/                  Unit and integration-style tests
+├── bin/spencer.js          npm executable
+├── lib/
+│   ├── agent.js            Agent/tool orchestration loop
+│   ├── cli.js              Terminal interface and diagnostics
+│   ├── config.js           Layered runtime configuration
+│   ├── provider.js         HTTP provider registry and adapters
+│   ├── tools.js            Model-facing tool definitions
+│   └── workspace.js        Repository operations and safety checks
+├── docs/                   npm, provider, plugin, and architecture guides
+├── test/                   Node.js automated tests
 ├── .github/                CI, release, ownership, and issue workflows
+├── package.json            npm package and executable metadata
+├── package-lock.json       Reproducible npm metadata
 ├── CONTRIBUTING.md         Contributor workflow
-├── SECURITY.md             Vulnerability reporting policy
-└── pyproject.toml          Package and build configuration
+└── SECURITY.md             Vulnerability reporting policy
 ```
 
-Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the engineering boundaries and [`docs/INSTALLATION.md`](docs/INSTALLATION.md) for the full installation matrix.
+Read [`docs/INSTALLATION.md`](docs/INSTALLATION.md) for the single npm installation path and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for engineering boundaries.
 
 ## Development
 
+Clone the public repository and install the project with npm:
+
 ```bash
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -e '.[dev]'
-python -m pytest
-ruff check src tests
-mypy src
-python -m spencer.cli --version
+git clone https://github.com/RUSHIT305/spencer.git
+cd spencer
+npm install
+npm test
+npm run check
 ```
 
-GitHub Actions tests Linux, macOS, and Windows across Python 3.10–3.13, runs Ruff and Mypy quality gates, compiles the package, validates the command-line smoke test, builds the wheel and source distribution, installs the wheel in a clean environment, checks package metadata, and uploads release artifacts. Tagged releases use the PyPI trusted-publishing workflow with build provenance attestation. The current workflow is the CI/CD gate for every pushed release baseline.
+GitHub Actions runs the Node test suite across macOS, Linux, and Windows with Node 18, 20, and 22. It also validates package contents and the npm executable on every supported platform. Tagged releases publish the npm package with provenance enabled.
 
 ## Contributing and support
 
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Report security issues privately according to [`SECURITY.md`](SECURITY.md). For product issues, include the output of `spencer --doctor` after removing keys, tokens, repository contents, and personal data.
-
-## License
-
-Spencer is released under the [MIT License](LICENSE).
