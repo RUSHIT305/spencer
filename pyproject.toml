@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spencer-agent"
-version = "0.3.0"
+version = "0.4.0"
 description = "A safe, provider-neutral terminal coding agent for local repositories"
 readme = "README.md"
 requires-python = ">=3.10"

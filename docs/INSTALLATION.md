@@ -1,8 +1,48 @@
 # Install Spencer
 
-Spencer is a Python command-line application. The supported runtime is Python 3.10 or newer. Choose one installation path below, then verify the command before starting your first run.
+Spencer is a Python engine distributed through both Python tooling and a cross-platform npm launcher. Python 3.10 or newer is required by the runtime. Choose one installation path below, then verify the command before starting your first run.
 
-## Option A: `uv` — recommended
+## Option A: npm — recommended for Node.js developers
+
+The npm package installs a cross-platform `spencer` launcher. The launcher runs Spencer’s bundled Python engine, so Python 3.10 or newer must be installed on the machine.
+
+### Global install
+
+```bash
+npm install --global spencer-agent
+spencer --version
+```
+
+### One-off execution with npx
+
+```bash
+npx spencer-agent --version
+npx spencer-agent "Explain this repository without modifying files"
+```
+
+### Project-local install
+
+```bash
+npm install --save-dev spencer-agent
+npx spencer "Run the relevant tests and summarize the result"
+```
+
+If Python is installed but not on `PATH`, point Spencer at it explicitly:
+
+```bash
+SPENCER_PYTHON=/absolute/path/to/python spencer --version
+```
+
+Windows PowerShell:
+
+```powershell
+$env:SPENCER_PYTHON = "C:\\Python312\\python.exe"
+spencer --version
+```
+
+The npm wrapper supports macOS, Linux, and Windows. It discovers `SPENCER_PYTHON`, an active virtual environment, `python3`/`python`, or the Windows `py` launcher in that order.
+
+## Option B: `uv` — recommended for Python-only environments
 
 `uv` installs Spencer into an isolated tool environment and keeps the `spencer` executable available without modifying a project virtual environment.
 
@@ -24,7 +64,7 @@ uv tool install spencer-agent
 spencer --version
 ```
 
-## Option B: `pipx`
+## Option C: `pipx`
 
 `pipx` is also an isolated installation method.
 
@@ -48,7 +88,7 @@ pipx install spencer-agent
 spencer --version
 ```
 
-## Option C: user-level Python installation
+## Option D: user-level Python installation
 
 Use this option when `uv` and `pipx` are not available.
 
@@ -68,7 +108,7 @@ spencer --version
 
 If the command is not found after a user-level installation, add Python’s user `bin` or `Scripts` directory to `PATH`, then restart the terminal.
 
-## Option D: install from a source checkout
+## Option E: install from a source checkout
 
 This path is intended for contributors or developers testing unreleased changes.
 

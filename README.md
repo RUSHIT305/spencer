@@ -10,11 +10,11 @@
   </p>
 </div>
 
-Spencer is a terminal-first coding agent for developers who want an AI pair programmer without leaving their shell, editor, Git workflow, or local machine. Give Spencer a task in plain English. It inspects the repository, proposes focused changes, runs relevant checks, and explains the result.
+Spencer is a terminal-first coding agent for developers who want an AI pair programmer without leaving their shell, editor, Git workflow, or local machine. The core engine is Python, with first-class Python and cross-platform npm distribution paths. Give Spencer a task in plain English. It inspects the repository, proposes focused changes, runs relevant checks, and explains the result.
 
 The default experience is deliberately human-in-the-loop: Spencer can inspect automatically, but file changes and shell commands require approval. The final result remains in your normal Git working tree for review.
 
-> **Current release note:** Spencer is release-ready at `0.3.0`, but the package has not yet been published to PyPI. The guaranteed installation path today is the source installation below. Once the first package release is published, the `uv` and `pipx` commands in the distribution section become the shortest install path.
+> **Current release note:** Spencer is release-ready at `0.4.0`, but the package has not yet been published to npm or PyPI. The guaranteed installation path today is the source installation below. Once the first registry releases are published, the `npm`, `uv`, and `pipx` commands in the distribution section become the shortest install paths.
 
 ## What Spencer does
 
@@ -92,7 +92,7 @@ spencer --version
 spencer --doctor
 ```
 
-You should see `spencer 0.3.0`. The diagnostic output reports the Python runtime, workspace, protocol, model, endpoint, and whether an API key is configured. It does not call the model.
+You should see `spencer 0.4.0`. The diagnostic output reports the Python runtime, workspace, protocol, model, endpoint, and whether an API key is configured. It does not call the model.
 
 ### Step 5 — Connect any API provider
 
@@ -153,9 +153,44 @@ git status
 git diff
 ```
 
-## Distribution installation after PyPI publication
+## Distribution installation
 
-After the first public package release, the shortest installation paths will be:
+### npm — cross-platform Node.js launcher
+
+The npm package is the recommended install path for JavaScript and TypeScript developers. It installs a cross-platform `spencer` executable and keeps the Python engine bundled inside the package. Python 3.10 or newer must be available on `PATH`, or you can set `SPENCER_PYTHON` to an explicit interpreter path.
+
+After the npm package is published:
+
+```bash
+npm install --global spencer-agent
+spencer --version
+```
+
+Run without a global install:
+
+```bash
+npx spencer-agent --version
+npx spencer-agent "Fix the failing parser test"
+```
+
+Install into a project:
+
+```bash
+npm install --save-dev spencer-agent
+npx spencer "Run the relevant tests and summarize the result"
+```
+
+From this repository, test the exact npm package path:
+
+```bash
+npm install
+npm test
+node bin/spencer.js --version
+```
+
+### Python distribution
+
+After the first public npm or Python package release, the shortest Python installation paths will be:
 
 ```bash
 uv tool install spencer-agent

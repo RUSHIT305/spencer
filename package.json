@@ -1,0 +1,49 @@
+{
+  "name": "spencer-agent",
+  "version": "0.4.0",
+  "description": "Spencer — a provider-neutral coding agent for the terminal",
+  "license": "MIT",
+  "private": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "spencer": "bin/spencer.js"
+  },
+  "files": [
+    "bin/",
+    "scripts/npm-postinstall.js",
+    "src/spencer/**/*.py",
+    "src/spencer/py.typed",
+    "assets/spencer-mark.svg",
+    "README.md",
+    "LICENSE",
+    "docs/PROVIDERS.md",
+    "docs/PLUGINS.md",
+    "docs/INSTALLATION.md"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/npm-postinstall.js",
+    "test": "node --test test/npm-wrapper.test.js",
+    "check": "node --check bin/spencer.js && node --check scripts/npm-postinstall.js && npm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ai",
+    "coding-agent",
+    "developer-tools",
+    "terminal",
+    "cli",
+    "llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RUSHIT305/spencer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RUSHIT305/spencer/issues"
+  },
+  "homepage": "https://github.com/RUSHIT305/spencer"
+}

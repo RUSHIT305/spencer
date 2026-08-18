@@ -2,6 +2,16 @@
 
 All notable changes to Spencer are documented here.
 
+## [0.4.0] — 2026-08-18
+
+### Added
+
+- Cross-platform npm package named `spencer-agent` with a global `spencer` executable.
+- `npx spencer-agent` and project-local npm installation support.
+- Runtime discovery for `SPENCER_PYTHON`, active virtual environments, `python3`, `python`, and Windows `py`.
+- npm package manifest checks, wrapper tests, clean tarball installation tests, and Node.js CI across macOS, Linux, and Windows.
+- Tagged npm publishing with provenance enabled in the release workflow.
+
 ## [0.3.0] — 2026-08-18
 
 ### Added
