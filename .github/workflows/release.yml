@@ -65,7 +65,8 @@ jobs:
       - name: Build standalone executable
         env:
           OUTPUT: ${{ runner.temp }}/spencer-${{ steps.release.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}
-        run: node -e "require('node:child_process').execFileSync(process.execPath, ['scripts/build-binary.js', '--output', process.env.OUTPUT], { stdio: 'inherit' })"
+        run: |
+          node -e "require('node:child_process').execFileSync(process.execPath, ['scripts/build-binary.js', '--output', process.env.OUTPUT], { stdio: 'inherit' })"
 
       - name: Attest standalone executable
         uses: actions/attest-build-provenance@v2
@@ -75,7 +76,8 @@ jobs:
       - name: Smoke test standalone executable
         env:
           OUTPUT: ${{ runner.temp }}/spencer-${{ steps.release.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}
-        run: node -e "const fs=require('node:fs'); const p=process.platform==='win32' ? process.env.OUTPUT+'.exe' : process.env.OUTPUT; require('node:child_process').execFileSync(p, ['--version'], {stdio:'inherit'}); if(!fs.statSync(p).isFile()) process.exit(1)"
+        run: |
+          node -e "const fs=require('node:fs'); const p=process.platform==='win32' ? process.env.OUTPUT+'.exe' : process.env.OUTPUT; require('node:child_process').execFileSync(p, ['--version'], {stdio:'inherit'}); if(!fs.statSync(p).isFile()) process.exit(1)"
 
       - name: Upload standalone executable
         uses: actions/upload-artifact@v4
