@@ -9,7 +9,23 @@ description = "A safe, terminal-first coding agent for local repositories"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Spencer contributors" }]
-dependencies = ["openai>=1.50.0"]
+license = "MIT"
+keywords = ["ai", "coding-agent", "developer-tools", "terminal", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = [
+    "openai>=1.50.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
@@ -17,12 +33,22 @@ dev = ["pytest>=8.0"]
 [project.scripts]
 spencer = "spencer.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/RUSHIT305/spencer"
+Repository = "https://github.com/RUSHIT305/spencer"
+Issues = "https://github.com/RUSHIT305/spencer/issues"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["spencer*"]
+
+[tool.setuptools.package-data]
+spencer = ["py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = "-ra"
 
 [tool.ruff]
 line-length = 100

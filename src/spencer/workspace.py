@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -14,9 +16,17 @@ class WorkspaceError(RuntimeError):
 class Workspace:
     """A constrained view of one repository directory."""
 
-    def __init__(self, root: Path, *, max_output_chars: int = 12_000, command_timeout: int = 30):
+    def __init__(
+        self,
+        root: Path,
+        *,
+        max_output_chars: int = 12_000,
+        max_file_chars: int = 500_000,
+        command_timeout: int = 30,
+    ):
         self.root = root.resolve()
         self.max_output_chars = max_output_chars
+        self.max_file_chars = max_file_chars
         self.command_timeout = command_timeout
         if not self.root.is_dir():
             raise WorkspaceError(f"Workspace does not exist or is not a directory: {self.root}")
@@ -42,7 +52,7 @@ class Workspace:
         ignored = {".git", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache"}
         results: list[str] = []
         base_depth = len(base.relative_to(self.root).parts)
-        for current, dirs, files in os.walk(base):
+        for current, dirs, files in os.walk(base, followlinks=False):
             dirs[:] = sorted(d for d in dirs if d not in ignored and not d.startswith("."))
             files = sorted(f for f in files if not f.startswith("."))
             current_path = Path(current)
@@ -63,11 +73,13 @@ class Workspace:
         base = self._safe_path(path)
         matches: list[str] = []
         ignored = {".git", ".venv", "venv", "node_modules", "__pycache__"}
-        for current, dirs, files in os.walk(base):
+        for current, dirs, files in os.walk(base, followlinks=False):
             dirs[:] = [d for d in dirs if d not in ignored]
             for filename in files:
                 file_path = Path(current) / filename
                 try:
+                    if file_path.stat().st_size > self.max_file_chars:
+                        continue
                     text = file_path.read_text(encoding="utf-8")
                 except (UnicodeDecodeError, OSError):
                     continue
@@ -83,6 +95,8 @@ class Workspace:
         if not file_path.is_file():
             raise WorkspaceError(f"Not a file: {path}")
         try:
+            if file_path.stat().st_size > self.max_file_chars:
+                raise WorkspaceError(f"File is larger than the configured limit: {path}")
             lines = file_path.read_text(encoding="utf-8").splitlines()
         except UnicodeDecodeError as exc:
             raise WorkspaceError(f"File is not UTF-8 text: {path}") from exc
@@ -93,9 +107,28 @@ class Workspace:
         return self._truncate(result)
 
     def write_file(self, path: str, content: str) -> str:
+        if len(content) > self.max_file_chars:
+            raise WorkspaceError(f"Content is larger than the configured limit: {path}")
         file_path = self._safe_path(path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content, encoding="utf-8")
+        original_mode = file_path.stat().st_mode if file_path.exists() else None
+        temporary_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=file_path.parent, prefix=f".{file_path.name}.", delete=False
+            ) as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+                temporary_path = Path(handle.name)
+            if original_mode is not None:
+                os.chmod(temporary_path, original_mode)
+            os.replace(temporary_path, file_path)
+        except OSError as exc:
+            raise WorkspaceError(f"Unable to write {path}: {exc}") from exc
+        finally:
+            if temporary_path and temporary_path.exists():
+                temporary_path.unlink(missing_ok=True)
         return f"Wrote {len(content.splitlines())} lines to {file_path.relative_to(self.root)}."
 
     def git_status(self) -> str:
@@ -116,11 +149,12 @@ class Workspace:
         if reason:
             raise WorkspaceError(f"Command blocked by Spencer safety policy: {reason}")
         try:
+            executable = os.getenv("COMSPEC") if os.name == "nt" else os.getenv("SHELL", "/bin/sh")
             completed = subprocess.run(
                 command,
                 cwd=self.root,
                 shell=True,
-                executable="/bin/bash",
+                executable=executable,
                 text=True,
                 capture_output=True,
                 timeout=timeout or self.command_timeout,

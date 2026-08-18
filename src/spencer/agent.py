@@ -4,9 +4,8 @@ import json
 from collections.abc import Callable
 from typing import Any
 
-from openai import OpenAI
-
 from .config import Settings
+from .provider import ChatProvider
 from .tools import TOOL_SCHEMAS, ToolRegistry
 from .workspace import WorkspaceError
 
@@ -43,13 +42,14 @@ class Agent:
         settings: Settings,
         registry: ToolRegistry,
         *,
+        provider: ChatProvider | None = None,
         client: Any | None = None,
         approve: ApprovalCallback | None = None,
         on_event: EventCallback | None = None,
     ):
         self.settings = settings
         self.registry = registry
-        self.client = client or OpenAI(base_url=settings.api_base)
+        self.provider = provider or ChatProvider(settings, client=client)
         self.approve = approve or (lambda _name, _args: False)
         self.on_event = on_event or (lambda _kind, _payload: None)
 
@@ -71,6 +71,8 @@ class Agent:
         for step in range(1, self.settings.max_steps + 1):
             self.on_event("step", {"step": step, "max_steps": self.settings.max_steps})
             response = self._complete(messages)
+            if not getattr(response, "choices", None):
+                raise RuntimeError("Provider returned no choices.")
             message = response.choices[0].message
             tool_calls = message.tool_calls or []
             assistant_message: dict[str, Any] = {
@@ -119,19 +121,4 @@ class Agent:
         )
 
     def _complete(self, messages: list[dict[str, Any]]) -> Any:
-        kwargs: dict[str, Any] = {
-            "model": self.settings.model,
-            "messages": messages,
-            "tools": TOOL_SCHEMAS,
-            "tool_choice": "auto",
-        }
-        model = self.settings.model.lower()
-        if model.startswith("gpt-5"):
-            kwargs["max_completion_tokens"] = 4_000
-        elif model.startswith("claude"):
-            kwargs["max_tokens"] = 4_500
-            if model.startswith("claude-sonnet-4-6") or model.startswith("claude-opus-4-6"):
-                kwargs["extra_body"] = {"thinking": {"type": "enabled", "budget_tokens": 2_048}}
-        else:
-            kwargs["max_tokens"] = 4_000
-        return self.client.chat.completions.create(**kwargs)
+        return self.provider.complete(model=self.settings.model, messages=messages, tools=TOOL_SCHEMAS)
