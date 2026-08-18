@@ -8,41 +8,101 @@ permissions:
   contents: write
   id-token: write
   attestations: write
-  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build and publish npm release
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    environment: npm
+  build:
+    name: Build ${{ matrix.platform }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux
+            arch: x64
+          - runner: macos-26-intel
+            platform: macos
+            arch: x64
+          - runner: macos-26
+            platform: macos
+            arch: arm64
+          - runner: windows-latest
+            platform: windows
+            arch: x64
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '22.13.0'
           cache: npm
+
       - name: Verify version matches tag
         shell: bash
         run: test "$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME#v}"
-      - name: Install and test npm package
-        run: npm ci && npm test && npm run check
-      - name: Create npm tarball
-        run: npm pack
-      - name: Attest npm build provenance
+
+      - name: Resolve release version
+        id: release
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install build dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate source
+        run: npm run check
+
+      - name: Build standalone executable
+        env:
+          OUTPUT: ${{ runner.temp }}/spencer-${{ steps.release.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}
+        run: node -e "require('node:child_process').execFileSync(process.execPath, ['scripts/build-binary.js', '--output', process.env.OUTPUT], { stdio: 'inherit' })"
+
+      - name: Attest standalone executable
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: '*.tgz'
-      - name: Publish to npm with provenance
+          subject-path: ${{ runner.temp }}/spencer-${{ steps.release.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}*
+
+      - name: Smoke test standalone executable
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --provenance --access public
-      - name: Create GitHub release
+          OUTPUT: ${{ runner.temp }}/spencer-${{ steps.release.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}
+        run: node -e "const fs=require('node:fs'); const p=process.platform==='win32' ? process.env.OUTPUT+'.exe' : process.env.OUTPUT; require('node:child_process').execFileSync(p, ['--version'], {stdio:'inherit'}); if(!fs.statSync(p).isFile()) process.exit(1)"
+
+      - name: Upload standalone executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: spencer-${{ matrix.platform }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/spencer-${{ steps.release.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    steps:
+      - name: Download standalone executables
+        uses: actions/download-artifact@v4
+        with:
+          pattern: spencer-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create checksums
+        working-directory: release-assets
+        run: sha256sum spencer-* > SHA256SUMS
+
+      - name: Publish release assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" *.tgz --generate-notes --title "$GITHUB_REF_NAME"
+        run: gh release create "$GITHUB_REF_NAME" release-assets/* --repo "$GITHUB_REPOSITORY" --generate-notes --title "$GITHUB_REF_NAME"

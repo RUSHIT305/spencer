@@ -2,12 +2,21 @@
 
 All notable changes to Spencer are documented here.
 
+## [0.6.0] — 2026-08-18
+
+### Changed
+
+- Replaced npm as the user-facing distribution channel with checksum-verified standalone executables published through GitHub Releases.
+- Added Bash and native PowerShell installers that install the global `spencer` command without requiring npm, Node.js, or administrator privileges.
+- Added Node SEA bundling, native artifact smoke tests, cross-platform release matrices, build attestations, and SHA-256 release manifests.
+- Added platform-aware installation and upgrade documentation.
+
 ## [0.5.1] — 2026-08-18
 
 ### Added
 
 - Running `spencer` without a task in an interactive terminal now prompts for the coding task and uses the current directory as the workspace.
-- Updated the primary npm installation and daily-use documentation to make the `cd project && spencer` workflow explicit.
+- Updated the primary installation and daily-use documentation to make the `cd project && spencer` workflow explicit.
 
 ## [0.5.0] — 2026-08-18
 

@@ -28,42 +28,42 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - name: Install npm package
+      - name: Install development dependencies
         run: npm ci
       - name: Run Node tests
         run: npm test
-      - name: Validate Node source and package manifest
+      - name: Validate source and installer scripts
         run: npm run check
-      - name: Smoke test CLI
+      - name: Smoke test source CLI
         run: node bin/spencer.js --version
+      - name: Parse PowerShell installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          [scriptblock]::Create((Get-Content -Raw install.ps1)) | Out-Null
+          Write-Host 'PowerShell installer parsed successfully.'
 
-  package:
-    name: Clean npm package installation
+  standalone:
+    name: Linux standalone executable
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     needs: test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: '22.13.0'
           cache: npm
-      - name: Install and test source package
-        run: npm ci && npm test
-      - name: Create npm tarball
-        shell: bash
-        run: npm pack --pack-destination "$RUNNER_TEMP"
-      - name: Install tarball in a clean consumer project
-        shell: bash
-        run: |
-          mkdir -p "$RUNNER_TEMP/spencer-consumer"
-          cd "$RUNNER_TEMP/spencer-consumer"
-          npm init -y
-          npm install "$RUNNER_TEMP"/spencer-agent-*.tgz
-          ./node_modules/.bin/spencer --version
-      - uses: actions/upload-artifact@v4
+      - name: Install development dependencies
+        run: npm ci
+      - name: Build standalone executable
+        run: npm run build:binary -- --output "$RUNNER_TEMP/spencer-linux-x64"
+      - name: Smoke test standalone executable
+        run: "$RUNNER_TEMP/spencer-linux-x64 --version"
+      - name: Upload standalone smoke artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: spencer-npm-package
-          path: ${{ runner.temp }}/spencer-agent-*.tgz
+          name: spencer-linux-x64-ci
+          path: ${{ runner.temp }}/spencer-linux-x64
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7

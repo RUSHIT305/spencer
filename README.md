@@ -11,7 +11,7 @@
   </p>
 </div>
 
-Spencer is a **Node.js terminal coding agent** for developers who want an AI pair programmer without leaving the shell, editor, or Git workflow. It is distributed through npm and works on macOS, Linux, Windows, CI runners, and containers.
+Spencer is a **standalone terminal coding agent** for developers who want an AI pair programmer without leaving the shell, editor, or Git workflow. It works on macOS, Linux, Windows, CI runners, and containers through native release executables.
 
 > **Zero provider setup:** Spencer uses a company-managed Gemini backend. Users do not install Python, provider SDKs, model runtimes, or API keys, and they do not configure endpoints or model IDs.
 
@@ -19,28 +19,21 @@ The default experience is human-in-the-loop. Spencer can inspect automatically, 
 
 ## Install Spencer
 
-### Global installation
+Spencer is installed as a standalone executable. No npm, Node.js, Python, API key, or provider setup is required.
+
+### macOS and Linux
 
 ```bash
-npm install --global spencer-agent
-spencer --version
+curl -fsSL https://raw.githubusercontent.com/RUSHIT305/spencer/master/install.sh | bash
 ```
 
-### One-time execution with npx
+### Windows PowerShell
 
-```bash
-npx spencer-agent --version
-npx spencer-agent "Explain this repository without changing files"
+```powershell
+irm https://raw.githubusercontent.com/RUSHIT305/spencer/master/install.ps1 | iex
 ```
 
-### Project-local installation
-
-```bash
-npm install --save-dev spencer-agent
-npx spencer "Run the relevant tests and summarize the result"
-```
-
-These are the complete installation steps on every supported operating system.
+The installer detects the platform and architecture, downloads the matching GitHub release binary, verifies its SHA-256 checksum, installs it for the current user, and configures `PATH`.
 
 ## First run
 
@@ -182,27 +175,28 @@ spencer/
 ├── docs/                   Installation and architecture guides
 ├── test/                   Node.js automated tests
 ├── .github/                CI, release, ownership, and issue workflows
-├── package.json            npm package and executable metadata
+├── package.json            Node development metadata and scripts
 ├── package-lock.json       Reproducible npm metadata
 ├── CONTRIBUTING.md         Contributor workflow
 └── SECURITY.md             Vulnerability reporting policy
 ```
 
-Read [`docs/INSTALLATION.md`](docs/INSTALLATION.md) for the single npm installation path and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the managed service boundary.
+Read [`docs/INSTALLATION.md`](docs/INSTALLATION.md) for the standalone installer workflow and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the managed service boundary.
 
 ## Development
 
-Clone the public repository and install the project with npm:
+Contributors can clone the public repository and use the Node.js development toolchain to run the source checks and build release binaries:
 
 ```bash
 git clone https://github.com/RUSHIT305/spencer.git
 cd spencer
-npm install
+npm ci
 npm test
 npm run check
+npm run build:binary -- --output dist/spencer
 ```
 
-GitHub Actions runs the Node test suite across macOS, Linux, and Windows with Node 18, 20, and 22. It validates the npm package and executable on every supported platform. Tagged releases publish the npm package with provenance enabled.
+The development toolchain is not required by Spencer users. GitHub Actions tests the source and builds native release artifacts for supported platforms. Tagged releases publish checksum-verified standalone executables through GitHub Releases.
 
 ## Contributing and support
 

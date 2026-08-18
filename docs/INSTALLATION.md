@@ -1,75 +1,79 @@
 # Install Spencer
 
-Spencer is a Node.js command-line application. **npm is the only installation method.** The AI backend is managed by Spencer, so users do not install Python, a provider SDK, a model runtime, or an API key.
+Spencer is distributed as a standalone executable. Users do not need npm, Node.js, Python, provider SDKs, model runtimes, or API keys.
 
-## Install
+## macOS and Linux
 
-Install Spencer globally:
+Run the installer from a terminal:
 
 ```bash
-npm install --global spencer-agent
-spencer --version
+curl -fsSL https://raw.githubusercontent.com/RUSHIT305/spencer/master/install.sh | bash
 ```
 
-Or run it once with `npx`:
+The installer detects the operating system and CPU architecture, downloads the matching Spencer release binary from GitHub, verifies its SHA-256 checksum, installs it under `~/.spencer/bin`, and adds that directory to the user shell profile. Open a new terminal if the installer asks you to refresh `PATH`.
 
-```bash
-npx spencer-agent --version
-npx spencer-agent "Explain this repository without changing files"
+## Windows PowerShell
+
+Run PowerShell as a normal user and execute:
+
+```powershell
+irm https://raw.githubusercontent.com/RUSHIT305/spencer/master/install.ps1 | iex
 ```
 
-Or install it in a project:
+The installer downloads the matching Windows executable, verifies its SHA-256 checksum, installs it under `%LOCALAPPDATA%\Spencer\bin`, and adds that directory to the user `PATH`. Open a new PowerShell window after installation.
 
-```bash
-npm install --save-dev spencer-agent
-npx spencer "Run the relevant tests and summarize the result"
-```
+## Start Spencer
 
-The same commands work on macOS, Linux, Windows PowerShell, Windows Command Prompt, CI runners, and containerized Node environments.
+Change into the project Spencer should work on and run the command with no extra setup:
 
-## Verify
-
-Run diagnostics without contacting the AI backend:
-
-```bash
-spencer --doctor
-```
-
-A healthy result shows the Spencer version, Node version, platform, workspace, managed backend, managed model, and `userApiConfiguration: false`. Credentials are never displayed because they are held by Spencer’s backend service.
-
-## Run Spencer
-
-The normal workflow is to enter the project directory and type `spencer`:
-
-```bash
+```text
 cd /path/to/your/project
 spencer
 ```
 
-Spencer prompts for the task:
+On Windows PowerShell, use a real path on your machine, for example:
+
+```powershell
+Set-Location C:\Users\Anuj\Documents\my-project
+spencer
+```
+
+Spencer prompts:
 
 ```text
 What would you like Spencer to work on?
 ```
 
-Enter a request such as `Inspect this repository and explain its architecture without modifying files` or `Fix the failing test and run the relevant checks`. The current directory is used as the workspace.
+Enter a request such as `Fix the failing tests and run the relevant checks`. Spencer uses the current directory as the workspace and asks for approval before file writes and shell commands.
 
-For scripts and one-line requests, provide the task directly:
+## Diagnostics
 
-```bash
-spencer "Fix the failing test and run the relevant checks"
+```text
+spencer --doctor
+spencer --version
+spencer --help
 ```
 
-Spencer asks for approval before file writes and shell commands. Use `--yes` only in a trusted workspace or controlled automation job.
+The diagnostics report the executable version, platform, workspace, managed backend, and whether user API configuration is disabled. Credentials are never stored in the executable or on the user’s machine.
 
-## What users do not configure
+## Installer controls
 
-Users do not set API keys, provider URLs, model IDs, protocol names, custom headers, request fields, or provider SDKs. Spencer’s npm client connects to the company-managed Gemini gateway, and the gateway stores the Gemini credential as a deployment secret.
+The installers support optional environment variables for controlled deployments:
 
-If the managed backend is temporarily unavailable, Spencer reports an actionable service error. Users should not add a local API key or modify provider settings to work around it.
+| Variable | Purpose |
+|---|---|
+| `SPENCER_VERSION` | Install a specific release instead of the latest release. |
+| `SPENCER_INSTALL_DIR` | Override the per-user installation directory. |
+| `SPENCER_SHELL_PROFILE` | Override the Unix shell profile updated by `install.sh`. |
 
-## Troubleshooting
+For example:
 
-If `spencer` is not found after a global installation, open a new terminal so npm’s global binary directory is available on `PATH`. Check the npm global prefix with `npm prefix --global`.
+```bash
+curl -fsSL https://raw.githubusercontent.com/RUSHIT305/spencer/master/install.sh | SPENCER_VERSION=0.6.0 bash
+```
 
-If the backend is unavailable, run `spencer --doctor` and check the public service-status channel or Spencer release notes. Do not add credentials to shell profiles, repository files, `.spencer.toml`, GitHub issues, or pull requests.
+## Security and updates
+
+The installer downloads only from the Spencer GitHub release and verifies the published checksum before replacing the executable. Releases are built on GitHub-hosted runners and are published with platform and architecture names. To update Spencer, run the same installer again. To remove it on macOS/Linux, delete `~/.spencer`; on Windows, remove `%LOCALAPPDATA%\Spencer` and its user `PATH` entry.
+
+No local API configuration file is supported. The managed Gemini service, model, endpoint, authentication, retry policy, and service safety controls are owned by Spencer’s deployment.

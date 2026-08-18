@@ -18,9 +18,9 @@ Paste the command and a minimal reproduction here. Remove secrets and proprietar
 
 - Spencer version (`spencer --version`):
 - Operating system:
-- Node version:
-- npm version:
-- Installation method (`npm install --global`, `npx`, project-local):
+- Node version, if installed separately:
+- Installation method (`install.sh`, `install.ps1`, GitHub release binary):
+- Installed executable path:
 - Managed backend status from `spencer --doctor`:
 
 ## Diagnostics

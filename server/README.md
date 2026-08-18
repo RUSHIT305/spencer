@@ -1,10 +1,10 @@
 # Spencer managed Gemini gateway
 
-This service is the company-operated backend for the npm client. End users do not run it, configure it, or provide credentials.
+This service is the company-operated backend for the standalone Spencer client. End users do not run it, configure it, or provide credentials.
 
 ## Required deployment secret
 
-Set `GEMINI_API_KEY` in the deployment platform’s secret manager. Never commit the value, add it to `.env` files, print it in logs, or expose it through the npm client.
+Set `GEMINI_API_KEY` in the deployment platform’s secret manager. Never commit the value, add it to `.env` files, print it in logs, or expose it through the standalone client.
 
 Optional deployment settings:
 
@@ -17,7 +17,7 @@ RATE_LIMIT_PER_MINUTE=30
 Start the gateway with Node.js 18 or newer:
 
 ```bash
-GEMINI_API_KEY="<deployment-secret>" npm run gateway
+GEMINI_API_KEY="<deployment-secret>" node server/gemini-gateway.js
 ```
 
 The production deployment should expose:
@@ -27,7 +27,7 @@ GET  /health
 POST /v1/generate
 ```
 
-The npm client expects the public gateway at `https://api.spencer.dev/v1/generate`. If the company changes the gateway domain, update `MANAGED_ENDPOINT` in `lib/config.js`, release a new npm version, and verify the complete CI matrix before publishing.
+The standalone client expects the public gateway at `https://api.spencer.dev/v1/generate`. The domain must resolve to this service and serve HTTPS before a public Spencer release is considered functional. If the company changes the gateway domain, update `MANAGED_ENDPOINT` in `lib/config.js`, build a new standalone release, and verify the complete CI matrix before publishing.
 
 ## Production controls
 

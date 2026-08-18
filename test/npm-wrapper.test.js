@@ -55,15 +55,16 @@ test('parses only workspace and safety options', () => {
 });
 
 
-test('runs the npm-installed executable directly', () => {
+test('runs the source executable directly', () => {
   const output = execFileSync(process.execPath, [wrapper, '--version'], { encoding: 'utf8' });
-  assert.match(output, /spencer 0\.5\.1/);
+  assert.match(output, /spencer 0\.6\.0/);
 });
 
 
 test('help explains that the managed backend needs no user API setup', () => {
   const output = execFileSync(process.execPath, [wrapper, '--help'], { encoding: 'utf8' });
-  assert.match(output, /npm/);
+  assert.match(output, /install\.sh/);
+  assert.match(output, /install\.ps1/);
   assert.match(output, /managed Gemini backend/);
   assert.doesNotMatch(output, /SPENCER_API_KEY/);
 });
