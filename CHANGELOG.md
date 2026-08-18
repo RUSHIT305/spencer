@@ -2,6 +2,16 @@
 
 All notable changes to Spencer are documented here.
 
+## [0.5.0] — 2026-08-18
+
+### Changed
+
+- Removed user-facing API configuration, provider selection, custom endpoints, model overrides, and provider plugin setup.
+- Added a company-managed Gemini gateway with server-side credential handling.
+- Added a Node-native Gemini client that sends only normalized agent requests to the managed gateway.
+- Added gateway tests for Gemini function declarations, function calls, function results, and response normalization.
+- Updated installation and product documentation so npm installation is the only user setup step.
+
 ## [0.4.0] — 2026-08-18
 
 ### Added

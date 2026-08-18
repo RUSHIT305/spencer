@@ -7,45 +7,45 @@ const test = require('node:test');
 
 const wrapper = path.resolve(__dirname, '..', 'bin', 'spencer.js');
 const cli = require('../lib/cli.js');
-const provider = require('../lib/provider.js');
 
 
-test('parses Node-native CLI options without Python runtime flags', () => {
-  const parsed = cli.parseArgs(['--protocol', 'ollama-chat', '--headers', '{"X-Test":"yes"}', 'Fix', 'tests']);
+test('parses only workspace and safety options', () => {
+  const parsed = cli.parseArgs(['--max-steps', '8', '--timeout', '45', 'Fix', 'tests']);
   assert.deepEqual(parsed.positionals, ['Fix', 'tests']);
-  assert.equal(parsed.options.protocol, 'ollama-chat');
-  assert.equal(parsed.options.headers, '{"X-Test":"yes"}');
+  assert.equal(parsed.options['max-steps'], '8');
+  assert.equal(parsed.options.timeout, '45');
+  assert.throws(() => cli.parseArgs(['--api-key', 'secret', 'Fix']), /manages the AI backend automatically/);
 });
 
 
 test('runs the npm-installed executable directly', () => {
   const output = execFileSync(process.execPath, [wrapper, '--version'], { encoding: 'utf8' });
-  assert.match(output, /spencer 0\.4\.0/);
+  assert.match(output, /spencer 0\.5\.0/);
 });
 
 
-test('shows help without external runtime prerequisites', () => {
+test('help explains that the managed backend needs no user API setup', () => {
   const output = execFileSync(process.execPath, [wrapper, '--help'], { encoding: 'utf8' });
   assert.match(output, /npm/);
-  assert.doesNotMatch(output, /Python/);
+  assert.match(output, /managed Gemini backend/);
+  assert.doesNotMatch(output, /SPENCER_API_KEY/);
 });
 
 
-test('doctor reports Node platform and built-in backends without calling a provider', () => {
+test('doctor reports managed credentials without exposing a key', () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'spencer-node-'));
   const output = execFileSync(process.execPath, [wrapper, '--doctor', '--cwd', workspace], { encoding: 'utf8' });
   const result = JSON.parse(output);
   assert.equal(result.node.startsWith('v'), true);
-  assert.equal(result.apiKey, 'missing');
-  assert.ok(result.availableBackends.includes('anthropic-messages'));
-  assert.ok(result.availableBackends.includes('ollama-chat'));
+  assert.equal(result.backend, 'Spencer Managed Gemini');
+  assert.equal(result.credentials, 'managed by Spencer');
+  assert.equal(result.userApiConfiguration, false);
+  assert.equal('apiKey' in result, false);
 });
 
 
-test('supports a registered custom provider backend', () => {
-  provider.registerBackend('test-node-backend', () => ({
-    buildPayload: () => ({}),
-    normalizeResponse: () => ({ choices: [{ message: { content: 'ok', tool_calls: [] } }] }),
-  }));
-  assert.ok(provider.availableBackends().includes('test-node-backend'));
+test('--init explicitly confirms that no API configuration file is needed', () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'spencer-node-'));
+  const output = execFileSync(process.execPath, [wrapper, '--init', '--cwd', workspace], { encoding: 'utf8' });
+  assert.match(output, /does not require an API configuration file/);
 });

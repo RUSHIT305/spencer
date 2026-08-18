@@ -18,9 +18,10 @@ Paste the command and a minimal reproduction here. Remove secrets and proprietar
 
 - Spencer version (`spencer --version`):
 - Operating system:
-- Python version:
-- Installation method (`uv`, `pipx`, pip, source):
-- Provider/model:
+- Node version:
+- npm version:
+- Installation method (`npm install --global`, `npx`, project-local):
+- Managed backend status from `spencer --doctor`:
 
 ## Diagnostics
 

@@ -1,7 +1,7 @@
 {
   "name": "spencer-agent",
-  "version": "0.4.0",
-  "description": "Spencer — a provider-neutral coding agent for the terminal",
+  "version": "0.5.0",
+  "description": "Spencer — a terminal coding agent powered by a managed Gemini backend",
   "license": "MIT",
   "private": false,
   "engines": {
@@ -18,13 +18,13 @@
     "assets/spencer-mark.svg",
     "README.md",
     "LICENSE",
-    "docs/PROVIDERS.md",
-    "docs/PLUGINS.md",
+    "server/",
     "docs/INSTALLATION.md"
   ],
   "scripts": {
     "test": "node scripts/test.js",
-    "check": "node scripts/check.js && npm pack --dry-run"
+    "check": "node scripts/check.js && npm pack --dry-run",
+    "gateway": "node server/gemini-gateway.js"
   },
   "publishConfig": {
     "access": "public"
