@@ -59,8 +59,12 @@ def _headers_from(value: Any) -> dict[str, str]:
         try:
             value = json.loads(value)
         except json.JSONDecodeError as exc:
-            raise ConfigError("headers must be a JSON object when provided through the environment") from exc
-    if not isinstance(value, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in value.items()):
+            raise ConfigError(
+                "headers must be a JSON object when provided through the environment"
+            ) from exc
+    if not isinstance(value, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in value.items()
+    ):
         raise ConfigError("headers must be a string-to-string object")
     return dict(value)
 
@@ -72,7 +76,9 @@ def _request_fields_from(value: Any) -> dict[str, Any]:
         try:
             value = json.loads(value)
         except json.JSONDecodeError as exc:
-            raise ConfigError("request_fields must be a JSON object when provided through the environment") from exc
+            raise ConfigError(
+                "request_fields must be a JSON object when provided through the environment"
+            ) from exc
     if not isinstance(value, dict):
         raise ConfigError("request_fields must be a JSON object")
     return dict(value)
@@ -137,54 +143,83 @@ class Settings:
         selected_config = next((path for path in candidates if path and path.is_file()), None)
         file_values = _read_toml(selected_config) if selected_config else {}
 
-        resolved_protocol = protocol or os.getenv("SPENCER_API_PROTOCOL") or _get(file_values, "protocol", "generic-json")
-        resolved_model = model or os.getenv("SPENCER_MODEL") or _get(file_values, "model", "default")
+        resolved_protocol = (
+            protocol
+            or os.getenv("SPENCER_API_PROTOCOL")
+            or _get(file_values, "protocol", "generic-json")
+        )
+        resolved_model = (
+            model or os.getenv("SPENCER_MODEL") or _get(file_values, "model", "default")
+        )
         resolved_url = (
             api_url
             or os.getenv("SPENCER_API_URL")
             or os.getenv("SPENCER_API_BASE")
             or _get(file_values, "api_url", _get(file_values, "api_base", None))
         )
-        resolved_key_header = api_key_header or os.getenv("SPENCER_API_KEY_HEADER") or _get(
-            file_values, "api_key_header", "Authorization"
+        resolved_key_header = (
+            api_key_header
+            or os.getenv("SPENCER_API_KEY_HEADER")
+            or _get(file_values, "api_key_header", "Authorization")
         )
-        resolved_key_prefix = api_key_prefix if api_key_prefix is not None else os.getenv(
-            "SPENCER_API_KEY_PREFIX", _get(file_values, "api_key_prefix", "Bearer")
+        resolved_key_prefix = (
+            api_key_prefix
+            if api_key_prefix is not None
+            else os.getenv("SPENCER_API_KEY_PREFIX", _get(file_values, "api_key_prefix", "Bearer"))
         )
-        resolved_headers = headers or _headers_from(os.getenv("SPENCER_API_HEADERS")) or _headers_from(
-            _get(file_values, "headers", {})
+        resolved_headers = (
+            headers
+            or _headers_from(os.getenv("SPENCER_API_HEADERS"))
+            or _headers_from(_get(file_values, "headers", {}))
         )
-        resolved_request_fields = request_fields or _request_fields_from(os.getenv("SPENCER_REQUEST_FIELDS")) or _request_fields_from(
-            _get(file_values, "request_fields", {})
+        resolved_request_fields = (
+            request_fields
+            or _request_fields_from(os.getenv("SPENCER_REQUEST_FIELDS"))
+            or _request_fields_from(_get(file_values, "request_fields", {}))
         )
-        resolved_api_timeout = api_timeout if api_timeout is not None else int(
-            os.getenv("SPENCER_API_TIMEOUT", _get(file_values, "api_timeout", 120))
+        resolved_api_timeout = (
+            api_timeout
+            if api_timeout is not None
+            else int(os.getenv("SPENCER_API_TIMEOUT", _get(file_values, "api_timeout", 120)))
         )
-        resolved_content_path = content_path or os.getenv("SPENCER_CONTENT_PATH") or _get(
-            file_values, "content_path", "choices.0.message.content"
+        resolved_content_path = (
+            content_path
+            or os.getenv("SPENCER_CONTENT_PATH")
+            or _get(file_values, "content_path", "choices.0.message.content")
         )
-        resolved_tool_calls_path = tool_calls_path or os.getenv("SPENCER_TOOL_CALLS_PATH") or _get(
-            file_values, "tool_calls_path", "choices.0.message.tool_calls"
+        resolved_tool_calls_path = (
+            tool_calls_path
+            or os.getenv("SPENCER_TOOL_CALLS_PATH")
+            or _get(file_values, "tool_calls_path", "choices.0.message.tool_calls")
         )
-        resolved_max_steps = max_steps if max_steps is not None else int(
-            os.getenv("SPENCER_MAX_STEPS", _get(file_values, "max_steps", 20))
+        resolved_max_steps = (
+            max_steps
+            if max_steps is not None
+            else int(os.getenv("SPENCER_MAX_STEPS", _get(file_values, "max_steps", 20)))
         )
-        resolved_timeout = command_timeout if command_timeout is not None else int(
-            os.getenv("SPENCER_COMMAND_TIMEOUT", _get(file_values, "command_timeout", 30))
+        resolved_timeout = (
+            command_timeout
+            if command_timeout is not None
+            else int(os.getenv("SPENCER_COMMAND_TIMEOUT", _get(file_values, "command_timeout", 30)))
         )
         resolved_auto = (
             auto_approve
             if auto_approve is not None
-            else os.getenv("SPENCER_AUTO_APPROVE", str(_get(file_values, "auto_approve", False))).lower()
+            else os.getenv(
+                "SPENCER_AUTO_APPROVE", str(_get(file_values, "auto_approve", False))
+            ).lower()
             in {"1", "true", "yes", "on"}
         )
-        resolved_output = max_output_chars if max_output_chars is not None else int(
-            os.getenv("SPENCER_MAX_OUTPUT_CHARS", _get(file_values, "max_output_chars", 12_000))
+        resolved_output = (
+            max_output_chars
+            if max_output_chars is not None
+            else int(
+                os.getenv("SPENCER_MAX_OUTPUT_CHARS", _get(file_values, "max_output_chars", 12_000))
+            )
         )
 
-        if not isinstance(resolved_protocol, str) or resolved_protocol not in SUPPORTED_PROTOCOLS:
-            supported = ", ".join(sorted(SUPPORTED_PROTOCOLS))
-            raise ConfigError(f"protocol must be one of: {supported}")
+        if not isinstance(resolved_protocol, str) or not resolved_protocol.strip():
+            raise ConfigError("protocol must be a non-empty backend name")
         if not isinstance(resolved_model, str) or not resolved_model.strip():
             raise ConfigError("model must be a non-empty string")
         if not isinstance(resolved_key_header, str) or not resolved_key_header.strip():
@@ -225,7 +260,7 @@ class Settings:
 
 
 def default_config_text() -> str:
-    return '''# Spencer configuration. CLI flags override environment and file values.
+    return """# Spencer configuration. CLI flags override environment and file values.
 [agent]
 # Supported protocols: openai-compatible, generic-json, anthropic-messages, ollama-chat
 protocol = "generic-json"
@@ -243,4 +278,4 @@ max_steps = 20
 command_timeout = 30
 auto_approve = false
 max_output_chars = 12000
-'''
+"""

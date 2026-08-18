@@ -2,6 +2,18 @@
 
 All notable changes to Spencer are documented here.
 
+## [0.3.0] — 2026-08-18
+
+### Added
+
+- Pluggable backend registry with built-in generic JSON, OpenAI-compatible, Anthropic Messages, and Ollama Chat adapters.
+- Third-party backend discovery through the `spencer.backends` Python entry-point group.
+- Local-model support through the Ollama Chat backend.
+- CLI diagnostics listing available provider backends.
+- Automated CLI, provider, backend, safety, configuration, and agent-loop tests.
+- Ruff and Mypy quality gates in CI.
+- Clean-wheel installation smoke tests and build-provenance attestation in the release workflow.
+
 ## [0.2.0] — 2026-08-18
 
 ### Added

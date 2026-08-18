@@ -9,10 +9,10 @@ from .provider import HTTPProvider, ProviderResponse
 from .tools import TOOL_SCHEMAS, ToolRegistry
 from .workspace import WorkspaceError
 
-
 SYSTEM_PROMPT = """You are Spencer, a careful coding agent operating inside one repository.
 
-Your job is to complete the user's coding task, not merely describe a solution. Work in small, verifiable steps:
+Your job is to complete the user's coding task, not merely describe a solution. Work in small,
+verifiable steps:
 1. Inspect the repository before making assumptions.
 2. Read the relevant files and understand existing conventions.
 3. Make the smallest coherent change that satisfies the task.
@@ -100,7 +100,10 @@ class Agent:
                 try:
                     arguments = self.registry.arguments(call.function.arguments)
                     if name in {"write_file", "run_command"} and not self.approve(name, arguments):
-                        result = "Action denied by user. Do not retry the same action without a meaningful change in plan."
+                        result = (
+                            "Action denied by user. Do not retry the same action "
+                            "without a meaningful change in plan."
+                        )
                         self.on_event("denied", {"name": name, "arguments": arguments})
                     else:
                         self.on_event("tool", {"name": name, "arguments": arguments})
@@ -120,4 +123,6 @@ class Agent:
         )
 
     def _complete(self, messages: list[dict[str, Any]]) -> ProviderResponse:
-        return self.provider.complete(model=self.settings.model, messages=messages, tools=TOOL_SCHEMAS)
+        return self.provider.complete(
+            model=self.settings.model, messages=messages, tools=TOOL_SCHEMAS
+        )

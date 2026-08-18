@@ -11,10 +11,9 @@ from typing import Any
 from . import __version__
 from .agent import Agent
 from .config import ConfigError, Settings, config_dir, default_config_text
-from .provider import ProviderError
+from .provider import ProviderError, available_backends
 from .tools import ToolRegistry
 from .workspace import Workspace, WorkspaceError
-
 
 LOGGER = logging.getLogger("spencer")
 
@@ -23,31 +22,61 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="spencer",
         description="A safe, terminal-first coding agent for local repositories.",
-        epilog="Example: spencer \"Fix the failing parser test and run the relevant checks\"",
+        epilog='Example: spencer "Fix the failing parser test and run the relevant checks"',
     )
     parser.add_argument("task", nargs="*", help="The coding task Spencer should complete.")
-    parser.add_argument("--cwd", default=".", help="Workspace directory; defaults to the current directory.")
+    parser.add_argument(
+        "--cwd", default=".", help="Workspace directory; defaults to the current directory."
+    )
     parser.add_argument("--config", type=Path, help="Use a specific TOML configuration file.")
-    parser.add_argument("--protocol", choices=["openai-compatible", "generic-json", "anthropic-messages", "ollama-chat"], help="Provider protocol.")
+    parser.add_argument(
+        "--protocol",
+        help=(
+            "Provider backend name; built-ins and installed Spencer backend plugins are supported."
+        ),
+    )
     parser.add_argument("--model", help="Provider model ID; defaults to config or SPENCER_MODEL.")
     parser.add_argument("--api-url", help="Provider HTTP endpoint for chat/tool requests.")
-    parser.add_argument("--api-key-header", help="Header receiving the API key (default: Authorization).")
-    parser.add_argument("--api-key-prefix", help="Prefix before the API key (default: Bearer; use empty for raw keys).")
+    parser.add_argument(
+        "--api-key-header", help="Header receiving the API key (default: Authorization)."
+    )
+    parser.add_argument(
+        "--api-key-prefix",
+        help="Prefix before the API key (default: Bearer; use empty for raw keys).",
+    )
     parser.add_argument("--headers", help="Extra request headers as a JSON object.")
     parser.add_argument("--request-fields", help="Extra JSON request fields as an object.")
     parser.add_argument("--api-timeout", type=int, help="Provider request timeout in seconds.")
     parser.add_argument("--max-steps", type=int, help="Maximum model/tool turns (default: 20).")
-    parser.add_argument("--timeout", type=int, help="Shell command timeout in seconds (default: 30).")
+    parser.add_argument(
+        "--timeout", type=int, help="Shell command timeout in seconds (default: 30)."
+    )
     parser.add_argument(
         "--yes",
         action="store_true",
-        help="Automatically approve file writes and shell commands. Use only in a trusted workspace.",
+        help=(
+            "Automatically approve file writes and shell commands. Use only in a trusted workspace."
+        ),
     )
-    parser.add_argument("--json", action="store_true", help="Emit the final result as one JSON object.")
-    parser.add_argument("--quiet", action="store_true", help="Suppress progress events and print only the final result.")
-    parser.add_argument("--verbose", action="store_true", help="Enable diagnostic logging on stderr.")
-    parser.add_argument("--init", action="store_true", help="Create a user config template and exit.")
-    parser.add_argument("--doctor", action="store_true", help="Check installation, configuration, and provider readiness.")
+    parser.add_argument(
+        "--json", action="store_true", help="Emit the final result as one JSON object."
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress progress events and print only the final result.",
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Enable diagnostic logging on stderr."
+    )
+    parser.add_argument(
+        "--init", action="store_true", help="Create a user config template and exit."
+    )
+    parser.add_argument(
+        "--doctor",
+        action="store_true",
+        help="Check installation, configuration, and provider readiness.",
+    )
     parser.add_argument("--version", action="version", version=f"spencer {__version__}")
     return parser
 
@@ -108,18 +137,23 @@ def _doctor(settings: Settings) -> int:
         "api_key": "configured" if settings.api_key else "missing",
         "api_key_header": settings.api_key_header,
         "configured_header_names": sorted(settings.headers),
+        "available_backends": available_backends(),
         "state_directory": str(settings.state_directory),
     }
     print(json.dumps(checks, indent=2))
     if not settings.api_key:
-        print("\nSet SPENCER_API_KEY or OPENAI_API_KEY before starting an agent run.", file=sys.stderr)
+        print(
+            "\nSet SPENCER_API_KEY or OPENAI_API_KEY before starting an agent run.", file=sys.stderr
+        )
         return 1
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, format="%(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.WARNING, format="%(levelname)s %(message)s"
+    )
     try:
         settings = Settings.from_values(
             Path(args.cwd),

@@ -6,7 +6,6 @@ from typing import Any, Callable
 
 from .workspace import Workspace, WorkspaceError
 
-
 TOOL_SCHEMAS = [
     {
         "type": "function",
@@ -58,7 +57,9 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "write_file",
-            "description": "Create or replace a UTF-8 text file. Use only when a file change is needed.",
+            "description": (
+                "Create or replace a UTF-8 text file. Use only when a file change is needed."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -81,7 +82,9 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "run_command",
-            "description": "Run a shell command from the workspace root. Prefer focused checks and tests.",
+            "description": (
+                "Run a shell command from the workspace root. Prefer focused checks and tests."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {

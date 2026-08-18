@@ -14,7 +14,7 @@ Spencer is a terminal-first coding agent for developers who want an AI pair prog
 
 The default experience is deliberately human-in-the-loop: Spencer can inspect automatically, but file changes and shell commands require approval. The final result remains in your normal Git working tree for review.
 
-> **Current release note:** Spencer is release-ready at `0.2.0`, but this repository is currently private and the package has not yet been published to PyPI. The guaranteed installation path today is the source installation below. Once the first package release is published, the `uv` and `pipx` commands in the distribution section become the shortest install path.
+> **Current release note:** Spencer is release-ready at `0.3.0`, but the package has not yet been published to PyPI. The guaranteed installation path today is the source installation below. Once the first package release is published, the `uv` and `pipx` commands in the distribution section become the shortest install path.
 
 ## What Spencer does
 
@@ -92,7 +92,7 @@ spencer --version
 spencer --doctor
 ```
 
-You should see `spencer 0.2.0`. The diagnostic output reports the Python runtime, workspace, protocol, model, endpoint, and whether an API key is configured. It does not call the model.
+You should see `spencer 0.3.0`. The diagnostic output reports the Python runtime, workspace, protocol, model, endpoint, and whether an API key is configured. It does not call the model.
 
 ### Step 5 — Connect any API provider
 
@@ -252,7 +252,7 @@ The available environment variables are `SPENCER_API_KEY`, `SPENCER_API_URL`, `S
 | `anthropic-messages` | An API that follows the Messages and tool-use format. | Spencer converts text blocks and tool-use blocks into its internal format. |
 | `ollama-chat` | An Ollama Chat API endpoint. | Uses `message.content` and `message.tool_calls`. |
 
-For a custom response shape, the dotted paths make the adapter configurable without writing a new integration. See the complete provider cookbook in [`docs/PROVIDERS.md`](docs/PROVIDERS.md) and the installation matrix in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+For a custom response shape, the dotted paths make the adapter configurable without writing a new integration. Installed backend plugins can add a new protocol through the `spencer.backends` entry-point group. See the complete provider cookbook in [`docs/PROVIDERS.md`](docs/PROVIDERS.md), the plugin contract in [`docs/PLUGINS.md`](docs/PLUGINS.md), and the installation matrix in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
 ## Safety model
 
@@ -267,7 +267,7 @@ These are defense-in-depth controls, not a replacement for a container, VM, or o
 ```text
 spencer/
 ├── assets/                 Brand assets
-├── docs/                   Installation, provider, and architecture guides
+├── docs/                   Installation, provider, plugin, and architecture guides
 ├── scripts/                Unix and PowerShell installers
 ├── src/spencer/
 │   ├── agent.py            Model/tool orchestration loop
@@ -292,10 +292,12 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -e '.[dev]'
 python -m pytest
+ruff check src tests
+mypy src
 python -m spencer.cli --version
 ```
 
-GitHub Actions tests Linux, macOS, and Windows across Python 3.10–3.13, validates the command-line smoke test, builds the wheel and source distribution, and checks package metadata. Tagged releases use the PyPI trusted-publishing workflow.
+GitHub Actions tests Linux, macOS, and Windows across Python 3.10–3.13, runs Ruff and Mypy quality gates, compiles the package, validates the command-line smoke test, builds the wheel and source distribution, installs the wheel in a clean environment, checks package metadata, and uploads release artifacts. Tagged releases use the PyPI trusted-publishing workflow with build provenance attestation. The current workflow is the CI/CD gate for every pushed release baseline.
 
 ## Contributing and support
 

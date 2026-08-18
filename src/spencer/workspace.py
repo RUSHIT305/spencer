@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import re
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -34,7 +33,9 @@ class Workspace:
     def _safe_path(self, relative_path: str) -> Path:
         candidate = Path(relative_path)
         if candidate.is_absolute():
-            raise WorkspaceError("Absolute paths are not allowed; use a path relative to the workspace.")
+            raise WorkspaceError(
+                "Absolute paths are not allowed; use a path relative to the workspace."
+            )
         resolved = (self.root / candidate).resolve()
         try:
             resolved.relative_to(self.root)
@@ -85,7 +86,10 @@ class Workspace:
                     continue
                 for line_number, line in enumerate(text.splitlines(), 1):
                     if query.lower() in line.lower():
-                        matches.append(f"{file_path.relative_to(self.root).as_posix()}:{line_number}: {line[:240]}")
+                        matches.append(
+                            f"{file_path.relative_to(self.root).as_posix()}:{line_number}: "
+                            f"{line[:240]}"
+                        )
                         if len(matches) >= 100:
                             return "\n".join(matches) + "\n... (truncated at 100 matches)"
         return "\n".join(matches) or "(no matches)"
@@ -115,7 +119,11 @@ class Workspace:
         temporary_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(
-                mode="w", encoding="utf-8", dir=file_path.parent, prefix=f".{file_path.name}.", delete=False
+                mode="w",
+                encoding="utf-8",
+                dir=file_path.parent,
+                prefix=f".{file_path.name}.",
+                delete=False,
             ) as handle:
                 handle.write(content)
                 handle.flush()
@@ -129,7 +137,8 @@ class Workspace:
         finally:
             if temporary_path and temporary_path.exists():
                 temporary_path.unlink(missing_ok=True)
-        return f"Wrote {len(content.splitlines())} lines to {file_path.relative_to(self.root).as_posix()}."
+        relative_path = file_path.relative_to(self.root).as_posix()
+        return f"Wrote {len(content.splitlines())} lines to {relative_path}."
 
     def git_status(self) -> str:
         completed = subprocess.run(
@@ -162,9 +171,11 @@ class Workspace:
                 env={**os.environ, "SPENCER_WORKSPACE": str(self.root)},
             )
         except subprocess.TimeoutExpired as exc:
-            output = (exc.stdout or "") + (exc.stderr or "")
-            return self._truncate(f"Command timed out after {timeout or self.command_timeout}s.\n{output}")
-        output = (completed.stdout or "") + (completed.stderr or "")
+            output = self._decode_output(exc.stdout) + self._decode_output(exc.stderr)
+            return self._truncate(
+                f"Command timed out after {timeout or self.command_timeout}s.\n{output}"
+            )
+        output = self._decode_output(completed.stdout) + self._decode_output(completed.stderr)
         return self._truncate(f"exit_code={completed.returncode}\n{output.strip()}")
 
     @staticmethod
@@ -172,7 +183,10 @@ class Workspace:
         normalized = re.sub(r"\s+", " ", command.strip().lower())
         patterns: list[tuple[str, str]] = [
             (r"(^|[;&|])\s*sudo\b", "sudo is not allowed inside the agent loop"),
-            (r"rm\s+-[^\n]*r[^\n]*f\s+/(?:\s|$)", "recursive deletion from filesystem root is not allowed"),
+            (
+                r"rm\s+-[^\n]*r[^\n]*f\s+/(?:\s|$)",
+                "recursive deletion from filesystem root is not allowed",
+            ),
             (r"git\s+reset\s+--hard", "destructive Git resets require manual execution"),
             (r"git\s+clean\s+-[^\n]*f", "destructive Git clean requires manual execution"),
             (r":\(\)\s*\{", "fork-bomb patterns are not allowed"),
@@ -182,6 +196,14 @@ class Workspace:
             if re.search(pattern, normalized):
                 return reason
         return None
+
+    @staticmethod
+    def _decode_output(value: str | bytes | None) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        return value
 
     def _truncate(self, text: str) -> str:
         if len(text) <= self.max_output_chars:

@@ -5,7 +5,9 @@ import pytest
 from spencer.config import ConfigError, Settings
 
 
-def test_cli_values_override_toml_and_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_values_override_toml_and_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     config = tmp_path / "settings.toml"
     config.write_text(
         "[agent]\nmodel = 'file-model'\nmax_steps = 4\ncommand_timeout = 12\nauto_approve = true\n",

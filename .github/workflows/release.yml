@@ -7,21 +7,34 @@ on:
 permissions:
   contents: write
   id-token: write
+  attestations: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
+    name: Build and publish release
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: pypi
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
       - name: Install build tooling
-        run: python -m pip install --upgrade build twine
+        run: python -m pip install --upgrade pip build twine
       - name: Build distributions
         run: python -m build
       - name: Validate distributions
         run: python -m twine check dist/*
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/*'
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
       - name: Create GitHub release

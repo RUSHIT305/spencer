@@ -29,6 +29,8 @@ def test_dangerous_commands_are_blocked(tmp_path: Path) -> None:
 
 def test_command_runs_in_workspace(tmp_path: Path) -> None:
     workspace = Workspace(tmp_path)
-    command = "echo %SPENCER_WORKSPACE%" if os.name == "nt" else "printf '%s' \"$SPENCER_WORKSPACE\""
+    command = (
+        "echo %SPENCER_WORKSPACE%" if os.name == "nt" else "printf '%s' \"$SPENCER_WORKSPACE\""
+    )
     result = workspace.run_command(command)
     assert str(tmp_path.resolve()) in result
